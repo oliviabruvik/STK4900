@@ -1,7 +1,7 @@
 ---
 title: "STK4900 - Statistical Methods and Applications"
 author: "Olivia Beyer Bruvik"
-date: "6/13/2021"
+date: "6/11/2021"
 output: html_document
 ---
 
@@ -9,136 +9,227 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Lecture 8  {.tabset}
+# Lecture 7  {.tabset}
 
 ```{r, include = FALSE}
 cigarettes=read.table("https://www.uio.no/studier/emner/matnat/math/STK4900/data/sigarett.txt", header=T)
 ```
 
 ## Topics
-1. Poisson distribution (3)
-1. Poisson regression (14)
-1. Generalized linear models (21)
+1. Maximum likelihood estimation (5)
+1. Multiple logistic regression (12)
+1. Deviance and likelihood ratio tests (21)
+1. Model fit (29)
 
-<https://www.uio.no/studier/emner/matnat/math/STK4900/v21/lectures/lecture8.pdf>
+<https://www.uio.no/studier/emner/matnat/math/STK4900/v21/lectures/lecture7.pdf>
 
-## Poisson distribution
-An appropriate model for "rare events" that are happening "randomly over time/space"
+## Maximum likelihood estimation (5) {.tabset}
 
-Arises as:
+### Maximum likelihood estimates
+We estimate the parameters, $\hat{\beta_0}$ and $\hat{\beta_1}$, in the logistic model by maximizing the likelihood (making the $y_i$ as likely as possible).
 
-* an approximation to the distribution of $Y \sim bin(n,p)$ when *p* is small and *n* is large ($\lambda = np$)
-* from a Poisson process
+The likelihood is the simultaneous density considered as a function of the parameters $\beta_0$ and $\beta_1$ for the observed values of $y_i$:
 
-$$
-P(Y=y) = \frac{\lambda^y}{y!} e^{-\lambda}, \quad y = 0,1,2,... \\
-Y \sim Po(\lambda) \\
-E(Y) = Var(Y) = \lambda
+$$ 
+L = \prod_{i=1}^n P(y_i | x_i) = \prod_{i=1}^n p_i^{y_i} (1-p_i)^{1-y_i} 
 $$
 
-### Poisson approximation to the binomial distribution
+### MLE and linear regression
+For linear regression models, maximum likelihood estimation coincides w/ least squares estimation because maximizing the likelihood L is the same as maximizing
 
 $$
-\binom{n}{p} p^y (1-p)^{n-y} \approx \frac{\lambda^y}{y!} e^{-\lambda}
-
+log(L) = -\frac{n}{2} log(2\pi\sigma^2) - \frac{1}{2 \sigma^2} \sum_{i=1}^n (y_i - \mu_i)^2
 $$
 
-### Poisson process {.tabset}
-
-#### Time
-
-Let Y be the number of events in an interval of length t:
+and minimizing
 
 $$
-Y \sim Po(\lambda t)
+\sum_{i=1}^n {(y_i - \mu_i)^2}
 $$
 
-##### Assumptions
-1. the rate of events \lambda is constant over time (rate = expected number of events per unit of time)
-1. the number of events in disjoint time-intervals are independent
-1. events do not occur together
 
-
-#### Space
-
-Let Y be the number of events in an area of size a:
-
-$$
-Y \sim Po(\lambda a)
-$$
-
-##### Assumptions
-1. the rate of points \lambda is constant over the region (rate = expected number of points in an area of size 0)
-1. the number of events in disjoint areas are independent
-1.points do not coincide
-
-### Overdispersion
-The expected value and variances are both estimates of \lambda and therefore approximately equal:
-
-$$
-\bar{y} = \frac{1}{n} \sum_{i=1}^n y_i \\
-s^2 = \frac{1}{n-1} \sum_{i=1}^n (y_i - \bar{y})^2
-$$
-
-#### Coefficient of dispersion
-
-$$
-CD = \frac{s^2}{\bar{y}} \\
-CD >> 1 \rightarrow overdispersion
-$$
-
-### Test of Poisson distribution
-
-Data: $y_1, y_2, ..., y_n$
-Null: $H_0: $ data are Poisson distributed
-
-1. Estimate (MLE): $\hat{\lambda} = \bar{y}$
-1. Compute expected frequencies under $H_0: E_j = n \times \frac{\hat{\lambda}^j}{j!} e^{-\hat{\lambda}}
-1. Compute observed frequencies: $O_j = n(y_i) \text{ equal to j}
-1. Aggregate (K) groups with small expected numbers, so that all $E_j's \geq 5$.
-1. Compute Pearson chi-square statistic:
-
-$$ X^2 = \sum{\frac{(O_j - E_j)^2}{E_j}} \sim K-2 $$
-
-If $p > 0.25$, the Poisson distribution fits nicely to the data.
-
-## Poisson regression
-
-$$
-\begin{align}
-\lambda_{i} &= \lambda(x_{1i}, x_{2i}, ..., x_{pi}) \\
-&= e^{\beta_0 + \beta_1x_{1i} + \beta_2x_{2i}+...+\beta_px_{pi}}
-\end{align}
-$$
+## Multiple logistic regression
 
 ### Data
-$$
-y_i, x_{1i}, x_{2i},...,x_{pi} \quad i=1,...,n \\
+Each subject has:
+1. A binary outcome y
+1. Predictors $x_1, x_2, ..., x_p$
+
+$$ 
 \begin{align}
-y_i &= \text{a count for subject } i \\
-x_{ji} &= \text{predictor (covariate) j for subject i}
+p(x_1, x_2, ..., x_p) &= E(y|x_1, x_2, ..., x_p) \\
+&= P(y=1|x_1, x_2, ..., x_p) \\
+&= \frac{e^{\beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_px_p}}{1 + e^{\beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_px_p}}
 \end{align}
 $$
 
-### Assumptions
-* responses $y_i$ are realizations of independent Poisson distributed random variables $Y_i \sim Po(\lambda_i)$
-* $\lambda_i = \lambda(x_{1i}, x_{2i}, ..., x_{pi})$ is a function of the covariates
+In terms of odds:
 
+$$
+\frac{p(x_1, x_2, ..., x_p) }{1 - p(x_1, x_2, ..., x_p)} = e^{\beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_px_p}
+$$
 
-### Rate ratio (RR)
-$e^{\beta_1 \Delta}$ is the rate ratio corresponding to one unit's increase in the value of the first covariate *holding all other covariates constant*
+The odds ratio $e^{\beta_j}$ is the odds ratio corresponding to one unit's increase in the value of the j-th covariate *holding all other covariates constant*.
 
 $$
 \begin{align}
-RR &= \frac{\lambda(x_1 + \Delta, x_2, ..., x_p)}{\lambda(x_1, x_2, ..., x_p)} \\
-&= \frac{
-exp(\beta_0 + \beta_1(x_{1} + \Delta) + \beta_2x_{2}+...+\beta_px_{p})}
-{exp(\beta_0 + \beta_1x_{1} + \beta_2x_{2}+...+\beta_px_{p})} \\
+odds \space ratio &= \frac{\frac{p(x_1 + \Delta, x_2, ..., x_p) }{1 - p(x_1 + \Delta, x_2, ..., x_p)}}{\frac{p(x_1, x_2, ..., x_p) }{1 - p(x_1, x_2, ..., x_p)}} \\
+&= \frac{e^{\beta_0 + \beta_1(x_1 + \Delta) + \beta_2x_2 + ... + \beta_px_p}}{e^{\beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_px_p}} \\
 &= e^{\beta_1 \Delta}
 \end{align}
 $$
 
-### Aggregated counts (grouped)
 
-An $Y_i \sim Po(w_i \lambda_i)$
+### Wald tests and CI
+
+### Hypothesis testing - Wald test
+$$ H_{0j}: \beta_j = 0 \\
+H_{Aj}: \beta_j \neq 0 $$
+
+We reject $H_0$ for large values of |z|:
+
+$$ 
+\begin{align}
+z &= \frac{\hat{\beta}_j}{se(\hat{\beta}_1)} \sim N(0,1) \\
+p &: P = 2P(Z>|z|) \\
+\text{95% CI for } \beta_j &= \beta_j \pm 1.96 \times se(\hat{\beta}_j) \\
+&= \hat{\beta}_j - 1.96 \times se(\hat{\beta}_j) 
+\leq \hat{\beta}_j
+\leq \hat{\beta}_j + 1.96 \times se(\hat{\beta}_j) \\
+\text{95% CI for } OR &= e^{\hat{\beta}_j - 1.96 \times se(\hat{\beta}_j)} \leq OR \leq e^{\hat{\beta}_j - 1.96 \times se(\hat{\beta}_j)}\\
+\end{align}
+$$
+
+```{r}
+wcgs=read.table("http://www.uio.no/studier/emner/matnat/math/STK4900/data/wcgs.txt",sep="\t",header=T,na.strings=".")
+wcgs.mult=glm(chd69~age+chol+sbp+bmi+smoke, 
+              data=wcgs,
+              family=binomial,
+              subset=(chol<600))
+# summary(wcgs.mult)
+## Odds ratios with CI
+# expcoef(wcgs.mult)
+```
+
+
+```{r, echo = FALSE}
+wcgs$behcat=factor(wcgs$behpat)
+wcgs.beh=glm(
+  chd69~age_10+chol_50+sbp_50+bmi_10+smoke+behcat,
+  data=wcgs, 
+  family=binomial, 
+  subset=(chol<600))
+summary(wcgs.beh)
+```
+
+
+## Deviance and likelihood ratio tests (10)
+Used to assess the fit of a logistic model (corresponding to sum of squares for linear regression) by comparing deviances in two models.
+
+### Deviance of a fitted model
+Denoted "residual deviance" in the output.
+
+$$ 
+\begin{align}
+D &= 2(\tilde{l} - \hat{l}) \\
+&= \frac{1}{\sigma^2} \sum_{i=1}^n (y_i - \hat{\mu}_i)^2
+\end{align}
+$$
+
+
+For the saturated model (model with no restrictions on the p~i~), the p~i~ are estimated by $\tilde{p}_i = y_i$ and the log-likelihood takes the value $\tilde{l} = l(\tilde{p}_i, ..., \tilde{p}_n)$
+
+### Null deviance
+The deviance for the model with no covariates, i.e. for the model where all the p~i~ are assumed to be equal.
+
+### Hypothesis testing
+$$
+H_0: \text{q of the }\beta_j's = 0
+$$
+
+We reject $H_0$ for large values of the test statistic, G: 
+$$
+G = D_0 - D \sim X^2 \text{ with q df under } H_0
+$$
+
+### G in terms of the likelihood ratio
+
+$$
+\begin{align}
+D = 2(\tilde{l}-\hat{l}) \quad &and \quad D_0 = 2(\tilde{l}-\hat{l}_0) \\
+\hat{l} = log(\hat{L}) \quad &and \quad \hat{l}_0 = log(\hat{L}_0) \\
+\hat{L} = max_{model}L \quad &and \quad \hat{L}_0 = max_{H_0} L
+\end{align}
+$$
+
+$$ 
+\begin{align}
+Thus, \\
+G &= D_0 - D \\
+&= 2(\tilde{l}-\hat{l}_0) - 2(\tilde{l}-\hat{l}) = -2(\hat{l}_0-\hat{l}) \\
+&= -2 log(\frac{\hat{L}_0}{\hat{L}})
+\end{align}
+$$
+
+Thus large values of G corresponds to small values of the likelihood ratio $\frac{\hat{L}_0}{\hat{L}}$ and the test based on G is equivalent to the likelihood ratio test.
+
+```{r}
+wcgs.resc=glm(
+  chd69~age_10+chol_50+sbp_50+bmi_10+smoke, 
+  data=wcgs,
+  family=binomial, 
+  subset=(chol<600))
+#summary(wcgs.resc)
+anova(wcgs.resc,wcgs.beh,test="Chisq")
+```
+
+### Interpretation
+
+* Deviance = 1589.6
+* For the model without behavioral pattern, the deviance takes the value $D_0 = 1614.4$
+* $G = D_0 - D = 1614.4 - 1589.6 = 24.8$
+* $P-value << 0.05 \rightarrow $ behavioral pattern is significant predictor of coronary heart disease.
+
+## Model fit for logistic regression
+
+### Model assumptions
+
+* Linearity
+* Heteroscedastic model, $Var(y_i | x_i) = p_i(1-p_i)$ (ie. depends on $E(y_i | x_i) = p_i$)
+* Independent responses
+* Normally distributed error terms and no outliers (not relevant (binary responses))
+
+### Checking linearity for logistic regression
+
+$$
+log(\frac{p(x_1, x_2, ..., x_p) }{1 - p(x_1, x_2, ..., x_p)})
+= \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_px_p
+$$
+
+#### Approaches:
+
+Grouping the covariates
+
+  * Use a deviance test and anova to check if categorical models give better fits than the numerical model:
+  * e.g. consider age group as a factor
+  * e.g. use the mean age in each age group as a numerical covariate
+  
+Adding square terms or logarithmic terms to the model
+
+  * Use a deviance test and anova to check if flexible models give a better fit than the original:
+  * e.g. add $\beta_2x^2$ or $\beta_2 log(x)$ terms
+  
+Extending the model to generalized addiive models
+
+  * $log(\frac{p(x_1)}{1-p(x_1)}) = \beta_0 + f_1(x_1)$ where $f_1(x_1)$ is a smooth function estimated by the program
+  * plot the estimated function with confidence intervals
+  * compare the simple and flexible model by a deviace test
+  
+### Deviance and grouped data
+Residual deviance and the null deviance are not the same when we use binary data and grouped data.
+
+The difference between the two, however, is the same in both cases.
+
+As long as we look at the differences between deviances, it does not matter whether we use binary or grouped data.
+
 

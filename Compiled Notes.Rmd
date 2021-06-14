@@ -28,8 +28,11 @@ options(knitr.duplicate.label='allow')
 ```{r child = "Lecture_6.Rmd"}
 ```
 
-```{r child = "Lecture_7b.Rmd"}
+```{r child = "Lecture_7.Rmd"}
 ```
 
-```{r child = "Lecture_8b.Rmd"}
+```{r child = "Lecture_8.Rmd"}
+```
+
+```{r child = "Lecture_9.Rmd"}
 ```
