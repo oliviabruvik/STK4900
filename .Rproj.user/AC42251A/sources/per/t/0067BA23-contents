@@ -1,0 +1,264 @@
+---
+title: "STK4900 - Lecture 2"
+subtitle: "Introduction to Simple Linear Regression"
+author: "Olivia Beyer Bruvik"
+date: "6/10/2021"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+#keep_md: true
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.dim = c(3.5, 3.5),
+  message = FALSE,
+  warning = FALSE)
+options(digits = 2)
+```
+
+# Lecture 2 {.tabset}
+
+## Topics
+1) One-way analysis of variance (ANOVA)
+2) Multiple testing and FDR
+3) Covariance and correlation
+4) Simple linear regression
+
+<https://www.uio.no/studier/emner/matnat/math/STK4900/v21/lectures/lecture2.pdf>
+
+## Tables
+<href https://www.uio.no/studier/emner/matnat/math/STK4900/v21/tabeller/t.pdf>
+
+## One-way analysis of variance (ANOVA)
+
+### ANOVA
+Purpose: To compare K > 1 groups
+
+$$ x_{i,k} = \text{observation number i in group k}, \space where \\
+i = 1,...,n_k \\
+k = 1,...,K $$
+
+### Assumptions
+1) All observations are independent
+2) Observations from group k are a random sample from $N(\mu_k, \sigma^2)$.
+
+### Sums of Squares
+$$ TSS = \sum_{1,k}{(x_{i,k}-\bar{x})^2} \\
+MSS = \sum_k{n_k(\bar{x_k}-\bar{x})^2} \\
+RSS = \sum_{1,k}{(x_{i,k}-\bar{x}_k)^2} \\
+TSS \space (total) = MSS \space (model) + RSS \space (residual) $$
+
+### Null hypothesis
+$$ H_0: \mu_1 = ... = \mu_k \\
+\text{versus the alternative that not all the } \mu_k \text{ are equal.} \\ $$
+
+### F statistic
+
+Unbiased estimator of $\sigma^2$:
+
+$$\sigma^2 \approx s^2 = \frac{RSS}{n-K} $$
+
+Under null hypothesis,
+
+$$ \sigma^2 \approx s^2 = \frac{MSS}{K-1} $$
+We reject the null hypothesis for large values of:
+
+$$ F = \frac{\frac{MSS}{K-2}}{\frac{RSS}{(n-K)}} $$
+
+### P-value
+$$ P = P(F>\text{observed value of F}) \\
+\text{where F is F-distributed with K-1 and n-K df under null} $$
+
+### R-commands
+```{r}
+rats=read.table("http://www.uio.no/studier/emner/matnat/math/STK4900/data/rats.txt",header=T)
+rats$diet=factor(rats$diet) # defines diet to be a categorical variable
+aov.rats=aov(time~diet,data=rats)
+summary(aov.rats)
+```
+
+### Relation to two-sample t-test (two-sided)
+
+The usual two-sided t-test for two samples is a special case of the F-test in a one-way ANOVA (K = 2).
+<br>
+We reject $H_0: \mu_1 = \mu_2$ for large values of |t|:
+
+$$ F = \frac{\frac{MSS}{K-2}}{\frac{RSS}{(n-K)}} = (\frac{\bar{x}_2 - \bar{x}_1}{se(\bar{x}_2 - \bar{x})})^2 = t^2 $$
+
+## Multiple testing correction (14)
+
+### Purpose
+Reduce False Discoveries (Type I errors): erroneously rejecting $H_0$ when performing multiple tests. 
+
+When running m=K(K-1)/2 tests with a significance level $\alpha$, the overall probability of rejecting one or more null hypotheses (falsely):
+$$\alpha < P(FD) < m*\alpha$$
+
+### Types of Type I Error Corrections
+1) Control Per-Comparison (PCER)
+$$ Gives \space P(FD_i > 0) \leq \alpha \text{ marginally for all } 1 \leq i \leq m $$
+2) Control Familywise (FWER)
+Controls overall probability of having at least one false discovery.
+e.g. Bonferroni: use per-comparison significance level $\frac{\alpha}{m}$
+$$ P_{adj} = P_{raw} * m$$
+$$ Guarantees \space P(FD > 0) \leq \alpha$$
+3) Control False Discovery Rate (FDR)
+Controls the expected proportion of false discoveries related to the total number of discoveries.
+$$ P_{i,adj} = Q*\frac{i}{m}, \\
+\text{where Q is the false discovery rate}$$
+$$ Guarantees \space FDR = E(\frac{FD}{D}) \leq \alpha $$
+
+### R commands
+p.adjust(P, method="FDR")
+
+## Covariance and correlation
+
+### Bivariate distributions
+Bivariate probability density, f(x,y),
+$$ P((X,Y) \in A) = \int_Af(x,y)dxdy $$
+describes the joint distribution of a pair of random variables (X,Y).
+
+The bivariabte normal distribution depends on the parameters:
+1) Mean of X: $\mu_1$
+2) Mean of Y: $\mu_2$
+3) Standard deviation of X: $\sigma_1$
+4) Standard deviation of Y: $\sigma_2$
+5) Correlation: $\rho$
+
+### Covariance and correlation
+Summarizes dependence between X and Y
+$$ Cov(X,Y) = E[(X-\mu_1)(Y-\mu_2)] \\
+\rho = corr(X,Y) = \frac{Cov(X,Y)}{sd(X)sd(Y)} \\
+-1 \leq \rho \leq 1$$
+
+### Pearson correlation coefficient, r
+Empirical correlation coefficient as estimator of theoretical correlation coefficient
+
+$$ r = \frac{\sum_{i=1}^n\frac{(x_1-\bar{x})(y_1-\bar{y}))}{n-1}}{s_x*s_y} \\
+where \space s_x \space and \space s_y \text{ are empirical SD of the xi's and yi's} $$
+
+### R commands
+```{r}
+fvc=c(3.9,5.6,4.1,4.2,4.0,3.6,5.9,4.5,3.6,5.0,2.9,4.3)
+pef=c(455,603,456,523,458,460,629,435,490,640,399,526)
+cov(fvc,pef)
+cov(fvc,pef)/(sd(fvc)*sd(pef))
+cor(fvc,pef)
+```
+
+### Test and confidence interval for correlation
+
+#### Assumptions
+$(x_1,y_1),...,(x_n,y_n)$ assumed a random sample from a bivariate normal distribution
+
+#### Null hypothesis
+$H_0: \rho = 0$ versus $H_0: \rho \ne 0$
+
+#### Test statistic
+We reject for lage values of |t|:
+$$ t = \frac{r\sqrt{n-2}}{\sqrt{1-r^2}} $$
+
+Test statistic t-distributed with n-2 df. 
+
+Note: confidence interval NOT symmetric. 
+
+#### R commands
+```{r}
+cor.test(fvc,pef)
+```
+
+### Spearman (rank) correlation
+Overcomes Pearson correlation's sensitivity to outliers in the data (linear). 
+
+The Pearson correlation of the ranks $(r_1, s_1),...,(r_n,s_n)$
+
+#### R commands
+```{r}
+cor(fvc, pef, method="spearman")
+```
+
+## Simple linear regression
+
+### Model
+$$ y_1 = E(y_1|x_i) + \epsilon_i = \beta_0 + \beta_1x_1+\epsilon_i, \space where \\
+y_i = outcome / response / dependent \space variable \\
+x_i = predictor / covariate / (explanatory/independent) \space variable \\
+\epsilon_i's = \text{independent error terms ("noise")}$$
+
+### Assumptions
+$x_i's$ are considered to be fixed quantities
+$\epsilon_i's$ are assumed to be $N(0,\sigma_\epsilon^2)$-distributed
+
+### Least squares
+Estimated regression coefficients, $\hat{\beta}_0$ and $\hat{\beta}_1$, obtained as the values of $b_0$ and $b_1$ that minimize the sum of squares:
+$$ \sum_{i=1}^n(y_i-b_0-b_1x_i)^2 $$
+
+### R commands
+```{r}
+water=c(0.31,0.85,1.26,2.47,3.75)
+erosion=c(0.82,1.95,2.18,3.02,6.07)
+fit=lm(erosion~water)
+summary(fit)
+plot(water,erosion,pch=19)
+abline(fit)
+```
+
+Fitted regression line: $erosion = 0.406 + 1.390 * water$
+
+### Fitted Values and Residuals
+Fitted values: $\hat{y}_1 = \hat{\beta}_0 + \hat{\beta}_1x_i$
+
+Residuals: $r_i = y_1 - \hat{y}_i$
+
+The residuals are estimates of the unobserved $\epsilon_i's$.
+
+### Sums of squares
+$$ TSS = \sum_{i=1}^n{(y_i-\bar{y})^2} \\
+MSS = \sum_{i=1}^n{(\hat{y_i}-\bar{y})^2} \\
+RSS = \sum_{i=1}^n{(y_i-\hat{y}_i)^2} \\
+TSS \space (total) = MSS \space (model) + RSS \space (residual) $$
+
+
+### Standard errors
+#### Unbiased estimator of sigma squared
+$$ \hat{Var}(\epsilon) = s_{y|x}^2 = \frac{RSS}{n-1}$$
+$s_{y|x}$ is the residual standard error R output
+
+#### SD and variance of beta hat:
+$$ se(\hat{\beta}_1) = \sqrt{\hat{Var}{\hat{\beta}}_1} \\
+\hat{Var}(\hat{\beta}_1) = \frac{s_{x|y}^2}{(n-1)s_x^2}, where \\
+s_x^2 = \sum_{i=1}^n\frac{(x_i-\hat{x})^2}{n-1} $$
+
+### Hypothesis tests
+#### Null
+$H_0: \beta_1 = 0$
+
+#### Test statistic
+We reject the null for large values of |t|:
+
+$$ t = \frac{\hat{\beta}_1}{se(\hat{\beta}_1)} $$
+
+T-distributed with n-2 df under null.
+
+#### Confidence Intervals
+95% CI for $\beta_1$:
+$$\hat{\beta}_1 \pm c * se(\hat{\beta}_1),
+\text {where c is the upper 97.5% (3.18) percentile in the t-distribution w/ n-2 df} $$
+
+NB! The confidence interval does not contain 0 if and only if $p \leq 0.05$. 
+
+### Correlation and regression
+The least squares estimate for the slope is given by:
+
+$$\hat{\beta}_1 = r\frac{s_y}{s_x}, \\
+\text{where sx and sy are the empirical standard deviations of the xis and yis} $$
+
+NB! The test for $H_0: \beta_1 = 0$ in a linear regression model is numerically equivalent to the test for $H_0: rho = 0$ for bivariate data. 
+
+### Coefficient of determination, `R^2` "Multiple R-squared"
+The proportion of the total variability in the outcomes (TSS) accounted for by the model (MSS).
+
+$$ R^2 = \frac{MSS}{TSS} = 1-\frac{RSS}{TSS} \\
+R^2 = r^2 \text{ for the simple linear regression model}$$
+

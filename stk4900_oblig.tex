@@ -1,0 +1,47 @@
+\documentclass[a4paper]{article}
+\title{STK4900 Oblig 1}
+\author{Olivia Bruvik}
+\date{Due March 11th 2021}
+
+
+\begin{document}
+	\maketitle
+	
+	\section{Problem 1}
+	
+	\subsection{Problem 1a}
+	
+	<<>>=
+	data(airquality)
+	library(ctest)
+	kruskal.test(Ozone ~ Month, data = airquality)
+	@
+	
+	\paragraph{}
+	Report  the  main  features  of  the  variableslog.no2andlog.carsby  numericalsummaries and plots.  Make a scatterplot withlog.carson the x-axis andlog.no2on the y-axis.  What do you see?
+
+	\subsection{Problem 1b}
+	
+	\begin{center}
+		<<fig=TRUE,echo=FALSE>>=
+		boxplot(Ozone ~ Month, data = airquality)
+		@
+	\end{center}
+	
+	\subsection{Problem 1c}
+	
+	\subsection{Problem 1d}
+	
+	\subsection{Problem 1e}
+	
+	\section{Problem 2}
+	
+	\subsection{Problem 2a}
+	
+	\subsection{Problem 2b}
+	
+	\subsection{Problem 2c}
+	
+	\section{Appendix}
+	
+\end{document}

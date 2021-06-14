@@ -1,0 +1,324 @@
+---
+title: "STK4900 - Statistical Methods and Applications"
+author: "Olivia Beyer Bruvik"
+date: "6/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lecture 6  {.tabset}
+
+```{r, include = FALSE}
+cigarettes=read.table("https://www.uio.no/studier/emner/matnat/math/STK4900/data/sigarett.txt", header=T)
+```
+
+## Topics
+1. Binary data and proportions (2)
+1. Comparing two proportions (5)
+1. Contingency tables (10)
+1. Excess risk, relative risk, and odds ratio (16)
+1. Logistic regression with one predictor (21)
+1. Classification (30)
+
+<https://www.uio.no/studier/emner/matnat/math/STK4900/v21/lectures/lecture6.pdf>
+
+## Binary data and proportions
+
+### Data
+$y_i=1$ is subject *i* has a certain property while otherwise $y_i = 0$. 
+
+### Finding the proportion in the population
+
+$$ 
+\begin{align}
+p &= P(y_i=1) \\
+&= \text{the proportion in the population } (0 \leq p \leq 1) \\
+\hat{p} &= \frac{\sum_{i=1}^n{y_i}}{n} = {n(y_i=1)}{n}
+\end{align} \\
+$$
+
+### Standard errors and confidence intervals
+
+$$
+se(\hat{p} = \sqrt{\frac{\hat{p}(1-\hat{p})}{n}}) \\
+\text{95% CI: } \hat{p} \pm 1.96 \times se(\hat{p})
+$$
+
+## Comparing two proportions
+
+### Assumptions
+
+1. Random sample of binary data from two populations
+1. Two samples are independent
+
+### 95% CI for $p_1-p_2$:
+
+$$
+\begin{align}
+\text{95% CI } &= \hat{p}_1-\hat{p}_2 \pm 1.96 \times se(\hat{p}_1-\hat{p}_2) \\
+&= \hat{p}_1-\hat{p}_2 \pm 1.96 \times \sqrt{se(\hat{p}_1)^2+se(\hat{p}_2)^2} \\
+&= \hat{p}_1-\hat{p}_2 \pm 1.96 \times \sqrt{\frac{\hat{p}_1(1-\hat{p}_1)}{n_1} + \frac{\hat{p}_2(1-\hat{p}_2)}{n_2}}
+\end{align}
+$$
+
+
+### Hypothesis testing
+
+$$ H_0: p_1 = p_2 \\
+ H_A: p_1 \neq p_2 $$
+ 
+We reject $H_0$ for large vales of *|z|*:
+$$
+z = \frac{\hat{p}_1-\hat{p}_2}{se_0(\hat{p}_1-\hat{p}_2)} \sim Z-distributed \\
+P = 2P(Z>|z|), \text{ where Z is standard normal}
+$$
+
+
+## Contingency tables
+
+Formulate the null hypothesis of no difference between population by comparing observed numbers in the table (denoted O's) with corresponding expected numbers if $H_0$ is true (denoted E's):
+
+```{r}
+bloodpr=matrix(c(14,11,6,11,11,10,8,9,12),nrow=3)
+dimnames(bloodpr)=list(c("F.low","F.middle","F.upper"), c("C.low","C.middle","C.upper"))
+bloodpr
+```
+
+### Find expected values (E)
+```{r}
+chisq.test(bloodpr,correct=F)$expected
+```
+
+### Hypothesis testing
+We reject $H_0$ for large values of $X^2$ (chi-square distributed):
+
+$$ 
+X^2 = \sum_{all cells}{\frac{(O-E)^2}{E}} \sim (rows-1) \times (columns-1) \space df \\
+P-value: P(X^2 \geq X_{obs}^2) 
+$$
+
+```{r}
+chisq.test(bloodpr,correct=F)
+```
+
+
+We can test the null hypothesis that there is no difference between the groups with a table.
+
+
+
+## Excess risk, relative risk, and odds ratio
+
+### Assumptions
+
+1. Random sample of binary data
+1. Independent samples
+1. Population 1 corresponds to an "exposed" population (x = 1)
+1. Population 2 corresponds to an "unexposed" population (x = 0)
+
+### Data
+
+Population 1: $p_1 = p(1) = P(y=1|x=1)$
+Population 2: $p_2 = p(0) = P(y=1|x=0)$
+
+### Excess and relative risk
+Excess risk (ER): measure of the effect of the "exposure"
+Relative risk (RR): measure of the effect of the "exposure"
+
+$$ 
+\begin{align}
+ER &= p(1) - p(0) = \hat{p}_1 - \hat{p}_2 \\
+RR &= \frac{p(1)}{p(0)} = \frac{\hat{p}_1}{\hat{p}_2}
+\end{align}
+$$
+
+### Odds
+
+$$
+odds = \frac{p}{1-p} \\
+odds(population 1): \frac{p(1)}{1-p(1)} = \frac{P(y=1|x=1)}{1-P(y=1|x=1)} \\
+odds(population 2): \frac{p(0)}{1-p(0)} = \frac{P(y=1|x=0)}{1-P(y=1|x=0)} \\
+$$
+
+### Odds ratio
+
+#### Interpretation
+$OR=1:$ Exposure does not affect odds of outcome
+$OR>1:$ Exposure associated with higher odds of outcome
+$OR<1:$ Exposure associated with lower odds of outcome
+
+#### Importance
+1. Turns up in logistic regression
+1. Related to relative risk:
+  * $RR=1 \rightarrow OR=1$
+  * $RR>1 \rightarrow 1<RR<OR$
+  * $RR<1 \rightarrow OR<RR<1$
+  * $p(1) << 1, \space p(0) <<1 \rightarrow OR \approx RR$
+
+$$
+OR = \frac{\frac{p(1)}{1-p(1)}}{\frac{p(0)}{1-p(0)}}
+$$
+
+## Logistic regression with one predictor
+
+Model that specifies a relation between p(x) and x:
+
+$$
+p(x) = E(y|x) = P(y=1|x)
+$$
+
+### Example
+How does the age (at entry to the study) affect the risk (probability) of developing coronary heart disease (CHD)?
+
+### Data
+$(x_1,y_1),...,(x_n,y_n)$, where $y_i$ is a binary outcome (0 or 1) for subject *i* and $x_i$ is a predictor for the subject (binary/numerical).
+
+### Logistic regression model
+
+$$
+p(x) = \frac{exp(\beta_0+\beta_1x)}{1+exp(\beta_0+\beta_1x)} = \frac{{e^{\beta_0 + \beta_1x}}}{1+e^{\beta_0 + \beta_1x}} 
+$$
+
+Suitable because it gives $0 \leq p \leq 1$, whereas a additive risk model (linear model), $p(x) = \beta_0+\beta_1x$ give impossible values for the probabilities.
+
+### Relation to odds
+The odds ratio, $e^{\beta_1}$, corresponds to one unit's increase in the value of the covariate. 
+
+$$
+\begin{align}
+odds &= \frac{p(x)}{1-p(x)} \\
+&= e^{\beta_0+\beta_1x}
+\end{align}
+$$
+Consider two subjects with covariate values $x+\Delta$ and $x$:
+
+$$
+\begin{align}
+odds \space ratio &= \frac{\frac{p(x+\Delta)}{1-p(x+\Delta)}}{\frac{p(x)}{1-p(x)}} \\
+&= \frac{e^{\beta_0+\beta_1(x+\Delta)}}{e^{\beta_0+\beta_1x}} \\
+&= e^{\beta_1\Delta}
+\end{align}
+$$
+
+The logistic regression model is linear in the log-odds and may be given as:
+$$
+log(\frac{p(x)}{1-p(x)}) = \beta_0+\beta_1x
+
+$$
+
+### R commands for logistic regression {.tabset}
+
+Both ways of fitting the logistic regression model give the same estimates and standard errors.
+
+#### Binary data
+
+```{r warnings=FALSE, messages = FALSE}
+## Using the individual binary data
+wcgs=read.table("http://www.uio.no/studier/emner/matnat/math/STK4900/data/wcgs.txt",sep="\t",header=T,na.strings=".")
+
+wcgs$agem=
+  39.5*(wcgs$agec==0)+
+  42.9*(wcgs$agec==1)+
+  47.9*(wcgs$agec==2)+
+  52.8*(wcgs$agec==3)+
+  57.3*(wcgs$agec==4)
+attach(wcgs)
+# cbind(chd69, agem)
+
+fit.binary=glm(chd69~agem, 
+               data=wcgs,
+               family=binomial)
+# summary(fit.binary)
+predict(fit.binary, 
+        type = 'response', 
+        data.frame(agem=50)) # predicts prob. at age 50
+
+```
+
+#### Grouped data
+Uses mean value in each group as a covariate.
+
+```{r}
+## Grouped data 
+chd.grouped=read.table("http://www.uio.no/studier/emner/matnat/math/STK4900/data/chd_grouped.txt ", header=T)
+chd.grouped
+fit.grouped=glm(cbind(chd,no-chd)~agem,
+                data=chd.grouped, 
+                family=binomial)
+# summary(fit.grouped)
+```
+
+### Interpretation
+$OR = e^{\beta_1}$ is the odds ratio for one unit increase in *x*.
+
+### Confidence interval for beta~1~ and odds ratio
+$$
+\begin{align}
+\text{95% CI for } \beta_1 &= \hat{\beta}_1 \pm 1.96 \times se(\hat{\beta}_1) \\
+&= \hat{\beta}_1 - 1.96 \times se(\hat{\beta}_1) 
+\leq \hat{\beta}_1
+\leq \hat{\beta}_1 + 1.96 \times se(\hat{\beta}_1) \\
+\text{95% CI for } OR &: e^{\hat{\beta}_1 - 1.96 \times se(\hat{\beta}_1)} \leq OR \leq e^{\hat{\beta}_1 - 1.96 \times se(\hat{\beta}_1)}\\
+\end{align}
+$$
+
+### R commands
+```{r}
+wcgs=read.table("http://www.uio.no/studier/emner/matnat/math/STK4900/data/wcgs.txt",sep="\t",header=T,na.strings=".")
+fit=glm(chd69~age, data=wcgs,family=binomial)
+expcoef <- function(glmobj) {
+  regtab=summary(glmobj)$coef
+  expcoef=exp(regtab[,1])
+  lower=expcoef*exp(-1.96*regtab[,2])
+  upper=expcoef*exp(1.96*regtab[,2])
+  cbind(expcoef,lower,upper)
+}
+expcoef(fit)
+
+```
+
+### Hypothesis testing - Wald test
+$$ H_0: \beta_1 = 0 \\
+H_A: \beta_1 \neq 0 $$
+
+We reject $H_0$ for large values of |z|:
+
+$$ z = \frac{\hat{\beta}_1}{se(\hat{\beta}_1)} \sim N(\mu, \sigma^2) \\
+p: P = 2P(Z>|z|) $$
+
+
+## Classification
+Logistic regression is a classifier, because a model can predict a categorical response.
+
+$$
+p(x) =  \frac{{e^{\beta_0 + \beta_1x}}}{1+e^{\beta_0 + \beta_1x}}  \\
+p(x) \geq 0.5 = \beta_0 + \beta_1x \geq 0 \rightarrow y=1 \\
+p(x) < 0.5 = \beta_0 + \beta_1x < 0 \rightarrow y=0 \\
+$$
+
+Extending to two predictors x~1~ and x~2~:
+
+$$
+p(x) =  \frac{{e^{\beta_0 + \beta_1x_1 +\beta_2x_2}}}{1+e^{\beta_0 + \beta_1x_1 +\beta_2x_2}}  \\
+p(x) \geq 0 = \beta_0 + \beta_1x_1 + \beta_2x_2 \geq 0 \rightarrow y=1 \\
+$$
+
+### Other common classification methods
+
+1. Linear discriminant analysis (LDA)
+
+  * assumes that predictors are normally distributed
+  
+1. K-nearest neighbours (KNN)
+
+  * Non-parametric
+  
+1. Generalized additive reading
+1. Tree-based methods
+1. Random forests
+1. Boosting
+1. Support vector machines (SVM)
+
+

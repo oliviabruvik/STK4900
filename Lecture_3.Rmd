@@ -1,0 +1,380 @@
+---
+title: "STK4900 - Statistical Methods and Applications"
+author: "Olivia Beyer Bruvik"
+date: "6/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lecture 3  {.tabset}
+
+## Topics
+1. Multiple regression: data structure and basic questions
+1. The multiple linear regression model
+1. Categorical predictors
+1. Planned experiments and observational studies
+
+
+<https://www.uio.no/studier/emner/matnat/math/STK4900/v21/lectures/lecture3.pdf>
+
+## Linear regression
+### Model
+
+* $y_i$ = outcome / response / dependent variable 
+* $x_i$ = predictor / covariate / (explanatory/independent) variable* \\
+* $\epsilon_i's$ = independent error terms ("noise")
+* $\beta_j$ is the change in $E(y|x)$ for an increase of one unit in the covariate $x_j$ holding all other covariates constant. 
+
+### Assumptions  {.tabset}
+1. $x_{ij}'s$ are considered to be fixed quantities
+1. $\epsilon_i's$ are assumed to be $N(0,\sigma_\epsilon^2)$-distributed
+1. fewer covariates than observations ($p \leq n \rightarrow$ unique least squares estimators
+
+<br>
+
+#### Multiple Linear Regression
+$$ \begin{align}
+y_i &= E(y_1|x_i) + \epsilon_i \\
+&= \beta_0 + \beta_1x_{1i} + \beta_2x_{2i} + ...+\beta_px_{pi} + \epsilon_i, 
+\end{align} \\
+where \space x_i = (x_{1i}, x_{2i},...,x_{pi}) $$
+
+#### Simple Linear Regression
+$$ y_1 = E(y_1|x_i) + \epsilon_i = \beta_0 + \beta_1x_1+\epsilon_i $$
+
+### Least squares {.tabset}
+
+Ordinary Least Squares Regression, we minimize the MSE so that:
+
+$$ \hat{\beta} = argmin_{\beta}(y-X\beta)^2 $$
+
+<br>
+
+#### Multiple Linear Regression
+The estimates $\hat{\beta}_0, \hat{\beta}_1, ..., \hat{\beta}_p$ are obtained as values of $b_0, b_1,...,b_p$ that minimize the sum of squares:
+$$ \sum_{i=1}^n(y_i-E(y_1|x_i))^2 =  \sum_{i=1}^n{(y_i-b_0-b_1x_{1i}-...-b_px_{pi})^2} $$
+
+```{r}
+# trees=read.table("http://www.uio.no/studier/emner/matnat/math/STK4900/data/trees.txt",header=T)
+# fit.both=lm(volume~diameter+height, data=trees)
+# summary(fit.both)
+```
+
+#### Simple Linear Regression
+Estimated regression coefficients, $\hat{\beta}_0$ and $\hat{\beta}_1$, obtained as the values of $b_0$ and $b_1$ that minimize the sum of squares:
+$$ \sum_{i=1}^n(y_i-b_0-b_1x_i)^2 $$
+
+```{r}
+water=c(0.31,0.85,1.26,2.47,3.75)
+erosion=c(0.82,1.95,2.18,3.02,6.07)
+fit=lm(erosion~water)
+summary(fit)
+plot(water,erosion,pch=19)
+abline(fit)
+```
+
+Fitted regression line: $erosion = 0.406 + 1.390 * water$
+
+The least squares estimate for the slope is given by:
+
+$$\hat{\beta}_1 = r\frac{s_y}{s_x}, \\
+\text{where sx and sy are the empirical standard deviations of the xis and yis} $$
+
+### Transformations of the outcome / covariates {.tabset}
+#### Multiple Linear Regression
+Regression model linear in the parameters $\beta_j$, but allows for non-linear effects of the covariates, e.g.:
+
+$$ volume = \beta_0 + \beta_1diameter + \beta_2(diameter)^2 + \beta_3height + \epsilon $$
+
+In R, add an I for Inhibit interpretation:
+
+```{r}
+# fit.both=lm(volume~diameter+I(diameter^2)+height, data=trees)
+# summary(fit.both)
+```
+
+$$ log(volume) = \beta_0 + \beta_1log(height) + \beta_2log(diameter) + \epsilon $$
+
+```{r}
+# fit.log=lm(log(volume)~log(height)+log(diameter), data=trees)
+# summary(fit.log)
+```
+
+
+### Fitted values and residuals
+#### Sums of squares
+$$ TSS = \sum_{i=1}^n{(y_i-\bar{y})^2} \\
+MSS = \sum_{i=1}^n{(\hat{y_i}-\bar{y})^2} \\
+RSS = \sum_{i=1}^n{(y_i-\hat{y}_i)^2} \\
+TSS \space (total) = MSS \space (model) + RSS \space (residual) $$
+
+#### Residuals
+$r_i = y_i - \hat{y}_1$
+The residuals are estimates of the unobserved $\epsilon_i's$.
+
+#### Fitted values {.tabset}
+##### Multiple linear regression
+$\hat{y}_i = \hat{\beta}_0 + \hat{\beta_1x_{1i}} + ... + \hat{\beta_px_{pi}}$
+
+##### Simple linear regression
+$\hat{y}_1 = \hat{\beta}_0 + \hat{\beta}_1x_i$
+
+### Coefficient of determination, `R^2` "Multiple R-squared" {.tabset}
+The proportion of the total variability in the outcomes (TSS) accounted for by the model (MSS).
+
+$$ R^2 = \frac{MSS}{TSS} = 1-\frac{RSS}{TSS} $$
+
+#### Multiple Linear Regression
+
+The multiple correlation coefficient,
+$$ r = \sqrt{R^2}, $$
+is the Pearson correlation coefficient btw the outcomes $(y_i)$ and the fitted values $(\hat{y}_i)$.
+
+#### Simple Linear Regression
+
+$$ R^2 = r^2 \text{ for the simple linear regression model}$$
+
+
+
+
+### Residual standard error {.tabset}
+$s_{y|x}$: the residual standard error R output
+
+Unbiased estimator of sigma squared:
+
+#### Multiple Linear Regression
+
+$$ \hat{Var}(\epsilon) = s_{y|x}^2 = \frac{RSS}{n-p-1} \\
+\begin{align}
+residual \space df &= n-p-1 \\
+&= n-(p+1) \\
+&= n(observations) - n(\beta_j's) 
+\end{align} $$
+
+#### Simple linear regression
+$$ \hat{Var}(\epsilon) = s_{y|x}^2 = \frac{RSS}{n-1}$$
+
+
+
+### Standard error of the estimates {.tabset}
+
+$$ se(\hat{\beta}_1) = \sqrt{\hat{Var}{\hat{\beta}}_1} \\
+\begin{align}
+s_x^2 &= \text{ the sample variances of the } x_{ji}'s \\ 
+&= \sum_{i=1}^n\frac{(x_{ji}-\hat{x_j})^2}{n-1} \\
+\end{align} $$
+
+#### Multiple Linear Regression
+$$ \hat{Var}(\hat{\beta}_1) = \frac{s_{x|y}^2}{(n-1)s_{xj}^2(1-r_j^2)} \\ 
+where \space r_j^2 \text{ is the multiple correlation coefficient}  $$
+
+#### Simple Linear Regression
+$$ \hat{Var}(\hat{\beta}_1) = \frac{s_{x|y}^2}{(n-1)s_x^2}  $$
+
+### Hypothesis tests
+
+NB! The test for $H_0: \beta_1 = 0$ in a linear regression model is numerically equivalent to the test for $H_0: \rho = 0$ for bivariate data. 
+
+#### Overall test for all coeffients (MLR)
+
+$$ H_0: \beta_1 = \beta_2 = ... = \beta_p = 0 $$
+
+We reject the null for large values of F:
+
+$$ F = \frac{\frac{MSS}{p}}{\frac{RSS}{n-p-1}} $$
+The test statistic is F-distributed with p and n-p-1 df under $H_0$.
+
+ <br>
+
+#### Test for a single predictor
+$H_0: \beta_j = 0$
+
+We reject the null for large values of |t|:
+
+$$ t = \frac{\hat{\beta}_1}{se(\hat{\beta}_1)} $$
+
+ <br>
+ 
+##### Degrees of freedom
+Multiple Linear Regression: $n-p-1$ df <br>
+Single Linear Regression: $n-2$ df
+
+ <br>
+ 
+#### Confidence Intervals
+95% CI for $\beta_j$:
+$$ \hat{\beta}_1 \pm c * se(\hat{\beta}_1), \\
+\text {where c is the upper 97.5% percentile in the t-distribution} $$
+
+NB! The confidence interval does not contain 0 if and only if $p \leq 0.05$. 
+
+ <br>
+ 
+##### Degrees of freedom
+Multiple Linear Regression: $n-p-1$ df <br>
+Single Linear Regression: $n-2$ df
+
+## Categorical predictors
+
+Two categorical predictors (e.g. female/male and treatment/control) corresponds to comparing two groups
+
+### Assumptions
+1. The data for the two groups are random sample from $N(\mu_1, \sigma_\epsilon^2)$ and $N(\mu_2, \sigma_\epsilon^2)$. 
+1. $\epsilon_i's$ are independent error terms that are $N(0, \sigma_\epsilon^2)$-distributed.
+
+### Binary covariate {.tabset}
+
+#### Factoring covariates
+$$ 
+\begin{align}
+Group \space 1: y_1, y_2, ...,y_{n1} \\
+Group \space 2: y_{n_1+1}, y_{n_1+2}, ...,y_{n} 
+\end{align}
+$$ 
+
+$$ 
+y_i = \mu_1+(\mu_2-\mu_1)*x_1+\epsilon_i \\
+where: \\
+$$
+
+\begin{align}
+\beta_0 &= \mu_1 = \text{expected outcome in the reference group} \\
+\beta_1 &= \mu_2 - \mu_1 = \text{difference in expected outcome} \\
+ \end{align}
+
+$$
+\begin{cases} 
+0 & for \space i=1,2,...,n_1 & (group 1, reference) \\
+1 & for \space i=n_1 + 1,...,n & (group 2) 
+\end{cases}
+$$
+<br>
+
+In R:
+```{r}
+# bonedensity= read.table("http://www.uio.no/studier/emner/matnat/math/STK4900/data/bonedensity.txt",header=T)
+# bonedensity$group=factor(bonedensity$group)
+# lm.density=lm(density
+```
+
+#### Treatment contrast
+* $\beta_0$ = "the grand mean", $\bar{\mu}$
+* $\beta_1 = \mu_1 - \bar{\mu}$
+
+$$ 
+y_i = \mu_1+(\mu_2-\mu_1)*x_1+\epsilon_i \\
+$$
+
+\begin{align}
+\beta_0 &= \mu_1 = \text{expected outcome in the reference group} \\
+\beta_1 &= \mu_2 - \mu_1 = \text{difference in expected outcome}
+ \end{align}
+ 
+$$
+y_i = \begin{cases} 
+\mu_1 + \epsilon_i = \bar{\mu}+(\mu_1-\bar{\mu}) + \epsilon_i & \text{for i in group 1} \\
+\mu_2 + \epsilon_i = \bar{\mu}+(\mu_2-\bar{\mu}) + \epsilon_i & \text{for i in group 2}
+\end{cases}
+$$
+
+$$
+\text{where the "grand mean", } \bar{\mu} = \frac{\mu_1+\mu_2}{2} \\
+$$
+
+
+$$ 
+y_i = \bar{\mu} + (\mu_1-\bar{\mu}) * x_i + \epsilon_i \quad i=1,2,...,n  \\
+$$
+
+$$
+where \space x_i = \begin{cases} 
+1 & for \space i=1,2,...,n & \text{(group 1)} \\
+-1 & for \space i=n_1 +1,...,n & \text{(group 2)}
+\end{cases}
+$$
+
+<br>
+
+```{r}
+# options(contrasts=c("contr.sum","contr.poly"))
+# lm.density.sum=lm(density~group,data=bonedensity)
+# summary(lm.density.sum)
+```
+
+### Multilevel categorical predictors
+
+#### Assumptions
+1. All observations are independent
+1. Observations from group k are $N(\mu_k, \sigma_\epsilon^2)$-distributed
+1. $\epsilon_i's$ are independent error terms that are $N(0, \sigma_\epsilon^2)$-distributed.
+
+<br>
+
+#### Coefficients
+* $\beta_0 = \mu_1$,\text{the expected outcome in the reference group}
+* $\beta_1 = \mu_{j+1} - \mu_1$,\text{the difference in expected outcome between group j+1 and the reference group}
+
+$$ 
+y_i = \mu_1+(\mu_2-\mu_1)*x_{1i}+ (\mu_3-\mu_1)*x_{2i} + ... + (\mu_k-\mu_1)*x_{k-1} + \epsilon_i \\
+$$
+
+ 
+$$
+x_{1i} = \begin{cases} 
+1 & \text{for i in group 2} \\
+0 & otherwise
+\end{cases}
+$$
+
+$$
+x_{2i} = \begin{cases} 
+1 & \text{for i in group 3} \\
+0 & otherwise
+\end{cases}
+$$
+
+$$
+x_{K-1i} = \begin{cases} 
+1 & \text{for i in group K} \\
+0 & otherwise
+\end{cases} \\
+$$
+
+$NB: \space All \space x_{ji} = 0 \text{   for i in group 1 (reference)}$
+
+<br>
+
+```{r}
+# rats=read.table("http://www.uio.no/studier/emner/matnat/math/STK4900/data/rats.txt",header=T)
+# rats$diet=factor(rats$diet)
+# fit.rats=lm(time~diet,data=rats)
+# summary(fit.rats)
+# anova(fit.rats)
+```
+
+
+## Planned experiments and observational studies {.tabset}
+
+### Planned experiments
+The values of the predictors are under the control of the experimenter.
+
+#### Orthogonality - uncorrelated predictors:
+1. $R^2 = r_1^2+r_2^2+...+r_p^2 \space where \space r_j = corr(\beta_j, y)$ 
+1. $\hat{\beta}_j$ are the same as obtained by fitting simple linear regression models for each covariate
+1. $se(\hat{\beta}_j)$ typically smaller
+1. $ \downarrow CI \space and \space \uparrow precision$ 
+
+#### Randomization
+No systematic initial difference btw groups --> causal effect can be draw
+
+### Observational experiments
+We condition on the observed values of the predictors.
+
+#### Correlated predictors:
+The effect of one covariate may change when other covariates are added to the model.
+
+#### Spurious effects (confounding covariates)
+Causal effect cannot be concluded because initial differences will be correlated within groups. 

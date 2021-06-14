@@ -1,0 +1,235 @@
+---
+title: "STK4900 - Statistical Methods and Applications"
+author: "Olivia Beyer Bruvik"
+date: "6/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lecture 7  {.tabset}
+
+```{r, include = FALSE}
+cigarettes=read.table("https://www.uio.no/studier/emner/matnat/math/STK4900/data/sigarett.txt", header=T)
+```
+
+## Topics
+1. Maximum likelihood estimation (5)
+1. Multiple logistic regression (12)
+1. Deviance and likelihood ratio tests (21)
+1. Model fit (29)
+
+<https://www.uio.no/studier/emner/matnat/math/STK4900/v21/lectures/lecture7.pdf>
+
+## Maximum likelihood estimation (5) {.tabset}
+
+### Maximum likelihood estimates
+We estimate the parameters, $\hat{\beta_0}$ and $\hat{\beta_1}$, in the logistic model by maximizing the likelihood (making the $y_i$ as likely as possible).
+
+The likelihood is the simultaneous density considered as a function of the parameters $\beta_0$ and $\beta_1$ for the observed values of $y_i$:
+
+$$ 
+L = \prod_{i=1}^n P(y_i | x_i) = \prod_{i=1}^n p_i^{y_i} (1-p_i)^{1-y_i} 
+$$
+
+### MLE and linear regression
+For linear regression models, maximum likelihood estimation coincides w/ least squares estimation because maximizing the likelihood L is the same as maximizing
+
+$$
+log(L) = -\frac{n}{2} log(2\pi\sigma^2) - \frac{1}{2 \sigma^2} \sum_{i=1}^n (y_i - \mu_i)^2
+$$
+
+and minimizing
+
+$$
+\sum_{i=1}^n {(y_i - \mu_i)^2}
+$$
+
+
+## Multiple logistic regression
+
+### Data
+Each subject has:
+1. A binary outcome y
+1. Predictors $x_1, x_2, ..., x_p$
+
+$$ 
+\begin{align}
+p(x_1, x_2, ..., x_p) &= E(y|x_1, x_2, ..., x_p) \\
+&= P(y=1|x_1, x_2, ..., x_p) \\
+&= \frac{e^{\beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_px_p}}{1 + e^{\beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_px_p}}
+\end{align}
+$$
+
+In terms of odds:
+
+$$
+\frac{p(x_1, x_2, ..., x_p) }{1 - p(x_1, x_2, ..., x_p)} = e^{\beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_px_p}
+$$
+
+The odds ratio $e^{\beta_j}$ is the odds ratio corresponding to one unit's increase in the value of the j-th covariate *holding all other covariates constant*.
+
+$$
+\begin{align}
+odds \space ratio &= \frac{\frac{p(x_1 + \Delta, x_2, ..., x_p) }{1 - p(x_1 + \Delta, x_2, ..., x_p)}}{\frac{p(x_1, x_2, ..., x_p) }{1 - p(x_1, x_2, ..., x_p)}} \\
+&= \frac{e^{\beta_0 + \beta_1(x_1 + \Delta) + \beta_2x_2 + ... + \beta_px_p}}{e^{\beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_px_p}} \\
+&= e^{\beta_1 \Delta}
+\end{align}
+$$
+
+
+### Wald tests and CI
+
+### Hypothesis testing - Wald test
+$$ H_{0j}: \beta_j = 0 \\
+H_{Aj}: \beta_j \neq 0 $$
+
+We reject $H_0$ for large values of |z|:
+
+$$ 
+\begin{align}
+z &= \frac{\hat{\beta}_j}{se(\hat{\beta}_1)} \sim N(0,1) \\
+p &: P = 2P(Z>|z|) \\
+\text{95% CI for } \beta_j &= \beta_j \pm 1.96 \times se(\hat{\beta}_j) \\
+&= \hat{\beta}_j - 1.96 \times se(\hat{\beta}_j) 
+\leq \hat{\beta}_j
+\leq \hat{\beta}_j + 1.96 \times se(\hat{\beta}_j) \\
+\text{95% CI for } OR &= e^{\hat{\beta}_j - 1.96 \times se(\hat{\beta}_j)} \leq OR \leq e^{\hat{\beta}_j - 1.96 \times se(\hat{\beta}_j)}\\
+\end{align}
+$$
+
+```{r}
+wcgs=read.table("http://www.uio.no/studier/emner/matnat/math/STK4900/data/wcgs.txt",sep="\t",header=T,na.strings=".")
+wcgs.mult=glm(chd69~age+chol+sbp+bmi+smoke, 
+              data=wcgs,
+              family=binomial,
+              subset=(chol<600))
+# summary(wcgs.mult)
+## Odds ratios with CI
+# expcoef(wcgs.mult)
+```
+
+
+```{r, echo = FALSE}
+wcgs$behcat=factor(wcgs$behpat)
+wcgs.beh=glm(
+  chd69~age_10+chol_50+sbp_50+bmi_10+smoke+behcat,
+  data=wcgs, 
+  family=binomial, 
+  subset=(chol<600))
+summary(wcgs.beh)
+```
+
+
+## Deviance and likelihood ratio tests (10)
+Used to assess the fit of a logistic model (corresponding to sum of squares for linear regression) by comparing deviances in two models.
+
+### Deviance of a fitted model
+Denoted "residual deviance" in the output.
+
+$$ 
+\begin{align}
+D &= 2(\tilde{l} - \hat{l}) \\
+&= \frac{1}{\sigma^2} \sum_{i=1}^n (y_i - \hat{\mu}_i)^2
+\end{align}
+$$
+
+
+For the saturated model (model with no restrictions on the p~i~), the p~i~ are estimated by $\tilde{p}_i = y_i$ and the log-likelihood takes the value $\tilde{l} = l(\tilde{p}_i, ..., \tilde{p}_n)$
+
+### Null deviance
+The deviance for the model with no covariates, i.e. for the model where all the p~i~ are assumed to be equal.
+
+### Hypothesis testing
+$$
+H_0: \text{q of the }\beta_j's = 0
+$$
+
+We reject $H_0$ for large values of the test statistic, G: 
+$$
+G = D_0 - D \sim X^2 \text{ with q df under } H_0
+$$
+
+### G in terms of the likelihood ratio
+
+$$
+\begin{align}
+D = 2(\tilde{l}-\hat{l}) \quad &and \quad D_0 = 2(\tilde{l}-\hat{l}_0) \\
+\hat{l} = log(\hat{L}) \quad &and \quad \hat{l}_0 = log(\hat{L}_0) \\
+\hat{L} = max_{model}L \quad &and \quad \hat{L}_0 = max_{H_0} L
+\end{align}
+$$
+
+$$ 
+\begin{align}
+Thus, \\
+G &= D_0 - D \\
+&= 2(\tilde{l}-\hat{l}_0) - 2(\tilde{l}-\hat{l}) = -2(\hat{l}_0-\hat{l}) \\
+&= -2 log(\frac{\hat{L}_0}{\hat{L}})
+\end{align}
+$$
+
+Thus large values of G corresponds to small values of the likelihood ratio $\frac{\hat{L}_0}{\hat{L}}$ and the test based on G is equivalent to the likelihood ratio test.
+
+```{r}
+wcgs.resc=glm(
+  chd69~age_10+chol_50+sbp_50+bmi_10+smoke, 
+  data=wcgs,
+  family=binomial, 
+  subset=(chol<600))
+#summary(wcgs.resc)
+anova(wcgs.resc,wcgs.beh,test="Chisq")
+```
+
+### Interpretation
+
+* Deviance = 1589.6
+* For the model without behavioral pattern, the deviance takes the value $D_0 = 1614.4$
+* $G = D_0 - D = 1614.4 - 1589.6 = 24.8$
+* $P-value << 0.05 \rightarrow $ behavioral pattern is significant predictor of coronary heart disease.
+
+## Model fit for logistic regression
+
+### Model assumptions
+
+* Linearity
+* Heteroscedastic model, $Var(y_i | x_i) = p_i(1-p_i)$ (ie. depends on $E(y_i | x_i) = p_i$)
+* Independent responses
+* Normally distributed error terms and no outliers (not relevant (binary responses))
+
+### Checking linearity for logistic regression
+
+$$
+log(\frac{p(x_1, x_2, ..., x_p) }{1 - p(x_1, x_2, ..., x_p)})
+= \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_px_p
+$$
+
+#### Approaches:
+
+Grouping the covariates
+
+  * Use a deviance test and anova to check if categorical models give better fits than the numerical model:
+  * e.g. consider age group as a factor
+  * e.g. use the mean age in each age group as a numerical covariate
+  
+Adding square terms or logarithmic terms to the model
+
+  * Use a deviance test and anova to check if flexible models give a better fit than the original:
+  * e.g. add $\beta_2x^2$ or $\beta_2 log(x)$ terms
+  
+Extending the model to generalized addiive models
+
+  * $log(\frac{p(x_1)}{1-p(x_1)}) = \beta_0 + f_1(x_1)$ where $f_1(x_1)$ is a smooth function estimated by the program
+  * plot the estimated function with confidence intervals
+  * compare the simple and flexible model by a deviace test
+  
+### Deviance and grouped data
+Residual deviance and the null deviance are not the same when we use binary data and grouped data.
+
+The difference between the two, however, is the same in both cases.
+
+As long as we look at the differences between deviances, it does not matter whether we use binary or grouped data.
+
+

@@ -1,0 +1,8 @@
+"0","for (i in c('CVLT', 'SDMT', 'BVMT', 'EDSS', 'EDSS_log')) {"
+"0","  #for (j in list(bicams_rim_data, bicams_non_rim_data)) {"
+"0","    non_rim_glm_results <- get_glm_results(i, bicams_non_rim_data, tlv=TRUE)"
+"0","    if (i == 'SDMT' | i == 'SDMT_z') {"
+"0","      non_rim_glm_results <- get_glm_results(i, sdmt_non_rim_data, tlv=TRUE)"
+"0","    }"
+"0","    print(non_rim_glm_results)"
+"0","}"

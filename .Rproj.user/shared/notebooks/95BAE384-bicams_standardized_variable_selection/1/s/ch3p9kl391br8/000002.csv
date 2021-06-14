@@ -1,0 +1,8 @@
+"0",""
+"0","for (i in c('CVLT', 'SDMT', 'BVMT', 'EDSS', 'EDSS_log')) {"
+"0","    glm_results <- get_glm_results(i, bicams_rim_data, tlv=FALSE)"
+"0","    if (i == 'SDMT' | i == 'SDMT_z') {"
+"0","      glm_results <- get_glm_results(i, sdmt_rim_data, tlv=FALSE)"
+"0","    }"
+"0","    print(glm_results)"
+"0","}"

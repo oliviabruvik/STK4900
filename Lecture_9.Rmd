@@ -1,0 +1,32 @@
+---
+title: "STK4900 - Statistical Methods and Applications"
+author: "Olivia Beyer Bruvik"
+date: "6/14/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lecture 9  {.tabset}
+
+```{r, include = FALSE}
+cigarettes=read.table("https://www.uio.no/studier/emner/matnat/math/STK4900/data/sigarett.txt", header=T)
+```
+
+## Topics
+1. Survival data and censoring (3)
+1. Survival function and hazard rate (14)
+1. Kaplan-Meier Estimation (24)
+1. Logrank test
+1. Proportional hazards and Cox regression
+
+<https://www.uio.no/studier/emner/matnat/math/STK4900/v21/lectures/lecture9.pdf>
+
+```{r data, include = FALSE}
+
+```
+
+## Survival data and censoring
+

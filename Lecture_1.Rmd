@@ -1,0 +1,263 @@
+---
+title: "STK4900 - Lecture 1"
+author: "Olivia Beyer Bruvik"
+date: "6/9/2021"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lecture 1  {.tabset}
+
+## Topics
+1) Intro / Exam
+2) Descriptive methods
+3) Data and Probability models
+4) Normal distributions
+5) Estimation and confidence intervals
+6) Hypothesis testing and p-values
+7) Robustness and bootstrapping
+
+<https://www.uio.no/studier/emner/matnat/math/STK4900/v21/lectures/lecture1.pdf>
+
+
+## Exam
+
+### Format
+- Answer questions about analyses of data sets based on given outputs of R
+- Exam will be similar to previous years (except 2020)
+- All examination aids are allowed
+
+### Submission
+- One PDF document
+- Take photos of hand writing / R markdown / Word?
+- Premake word doc or R markdown with useful notes and equations
+- Remove personal info <https://www.uio.no/english/studies/examinations/submissions/submit-answer/submit-file-upload.html>.
+
+## Descriptive Methods
+### Mean, median, SD
+- mean, ${\bar{x}=\frac{1}{n}\sum_{i=1}^{n}{\bar{x}}}$
+- median, med
+- standard deviation, $s = \sqrt{\frac{1}{1-n}sum_{i=1}^{n}(x_i-\bar{x})^2}$
+
+### Illustrations
+- histograms
+- empirical cumulative distribution (ecdf)
+- boxplot
+
+### Data, $\bar{x},...,x_n$
+- replications of the same measurement or observations on random sample of population
+- numerical or categorical
+
+```{r figures-side, fig.show="hold", out.width="50%"}
+# Descriptive methods
+summary(cars$speed)
+
+# Illustrations
+hist(cars$speed)
+boxplot(cars$speed)
+```
+
+## Data and Probability models
+### Random variable, X
+- Data assumed independent replications of a random variable, X
+- distribution described by:
+1) probability density (histogram), $f(x)$,
+2) or a cumulative distribution function (ecdf), $F(x)$
+
+Computing probability that a realization of X falls in a certain interval:
+$${P(a<X\leq{b}) = \int_{a}^{b}f(x)dx = F(b) - F(a)}$$
+
+## Normal distributions
+
+### Distributions of continuously distributed random variables
+
+1. Mean or expectation: $\mu = E(X) = \int_{-\infty}^{\infty}xf(x)dx$
+2. Variance: $\sigma^2=Var(X)=\int_{-\infty}^{\infty}(x-\mu)^2f(x)dx$
+3. Standard variation: $\sigma=sd(X)=\sqrt{Var(X)}$
+
+Similar formulas with sums apply for discrete random variables
+
+### Properties of expectation and variance
+
+$E(a+bX) = a+bE(X)$ <br>
+$E(X+Y) = E(X)+E(Y)$<br>
+
+$Var(a+bX)=b^2Var(X)$ <br>
+$Var(X+Y)=Var(X)+Var(Y)$, where X and Y are independent
+
+### Law of Large Numbers
+Suppose that $\bar{x},...,x_n$ are independent replications of a random variable X with mean $\mu$ and standard deviation $\sigma$, then
+$$ \bar{x} \to \mu \\
+s \to \sigma $$
+as $n$ increases.
+
+### Normal distributions
+$X \sim N(\mu,\sigma^2)$ - Random variable X is normally distributed with mean $\mu$ and SD $\sigma$.
+$$f(x)=\frac{1}{\sigma\sqrt{2\pi}}*e^{-\frac{1}{2}*(\frac{x-\mu}{\sigma})^2}$$
+
+### Standard Normal distribution
+$Z \sim N(0,1)$
+
+1) $If \space X \sim N(\mu,\sigma^2), \space then \space Z = \frac{X-\mu}{\sigma} \sim N(0,1)$
+
+2) Suppose that $x_1,...,x_n$ are independent replications of a random variable $X \sim N(\mu,\sigma^2)$, then $\bar{x} \sim N(\mu,\sigma^2/n)$
+
+<br>
+
+Central Limit Theorem <br>
+$n \to \infty$: Result two holds approximately also when $x_1,...,x_n$ is a random sample from another distribution than the normal
+
+## Estimation and confidence intervals (14)
+### Theta
+$\theta$: a parameter describing the probability model (mean or SD), or function of model parameters (coefficient of variation of $\frac{\sigma}{\mu}$).
+
+Mean $\bar{x}$ to estimate the mean $\mu$ of distribution:
+$\hat{\mu}=\bar{x}$
+
+We consider unbiased estimators, ie. $E(\hat{\theta}) = \theta$
+
+### Standard error
+$$se(\hat{\theta}) = \sqrt{Var(\hat{\theta})}$$
+
+$$\hat{\mu} = \bar{x} \to se(\bar{x}) = \frac{\sigma}{\sqrt{n}} = \frac{s}{\sqrt{n}}$$
+
+$$\downarrow se \propto \downarrow s \propto \uparrow n $$
+
+### Confidence Intervals
+
+$$ (\hat{\theta} - c * se(\hat{\theta}), \space \hat{\theta} + c*se(\hat{\theta})) = \hat{\theta} \pm c*se(\hat{\theta})$$
+#### Confidence Coefficient of Confidence Interval
+The probability that the interval contains the unknown quantity:
+$$P(L< \theta < U) = 1-\alpha$$
+
+### Confidence interval for the mean µ (17) {.tabset}
+
+Suppose $x_1,...,x_n$ is a random sample from $N(\mu,\sigma^2)$.
+
+- $\mu_0$ is the mean for X
+- $\hat{x}$ is the empiric mean
+- $s$ is the empiric standard deviation
+
+<br>
+
+#### Sigma known
+$\bar{x} \sim N(\mu, \frac{\sigma^2}{n})$ and a confidence interval takes the form:
+
+$$ \bar{x} \pm c * \frac{\sigma}{\sqrt{n}} $$
+c is defined by:
+
+$$ P(\bar{x} - c * \frac{\sigma}{\sqrt{n}} < \mu < \bar{x} + c * \frac{\sigma}{\sqrt{n}}) = 1- \alpha $$
+<br>
+
+One may find c from a table of the standard normal distribution.
+In particular for a 95% CI we have c = 1.96.
+
+#### Sigma unknown
+When $\sigma$ is unknown, we estimate the empirical SD, s.
+
+Confidence interval takes the form:
+
+$$ \bar{x} \pm c * \frac{s}{\sqrt{n}} $$
+Use t-distribution with n-1 df to determine c (95% CI = 2.10). 
+
+## Hypothesis testing and p-values
+$H_0: \theta \leq \theta_0$ versus the (one-sided) alternative hypothesis $H_A: \theta>\theta_0$.
+
+### P-values
+The probability, when $H_0$ is true, that the test statistic is a value equal to or more extreme than the one observed. 
+
+Testing null hypothesis, $H_0: \mu \leq \mu_0$, versus the alternative $H_A:\mu > \mu_0$ <br>
+
+### Test for the mean µ {.tabset}
+
+#### σ known
+We reject $H_0$ for large values of test statistic:
+
+$$ z = \frac{\hat{x}-\mu_0}{\frac{\sigma}{\sqrt{n}}} $$
+Under $H_0$, the test statistic is standard normally distributed. 
+
+Used to compute one-sided P-value: 
+$$ P = P(Z>z), \space where \space Z \sim N(0,1) $$
+<br> 
+
+#### σ unknown
+We reject $H_0$ for large values of test statistic:
+
+$$ t = \frac{\hat{x}-\mu_0}{\frac{s}{\sqrt{n}}} $$
+Under $H_0$, the test statistic is t-distributed w/ n-1 degrees of freedom. 
+
+Used to compute one-sided P-value: 
+$$ P = P(T>t), \text{where T is t-distributed with n-1 df}$$
+<br>
+
+### Comparing two groups
+
+
+```{r, echo = FALSE}
+cont=c(0.228, 0.207, 0.234, 0.220, 0.217, 0.228, 0.209, 0.221, 0.204, 0.220,
+0.203, 0.219, 0.218, 0.245, 0.210)
+treat=c(0.250, 0.237, 0.217, 0.206, 0.247, 0.228, 0.245, 0.232, 0.267, 0.261,
+0.221, 0.219, 0.232, 0.209, 0.255)
+
+boxplot(treat, cont,names=c("Treatment","Control"))
+
+```
+
+
+#### Assumption
+Equal variances in the two groups, $\sigma_1^2 = \sigma_2^2$
+
+$\mu_2 - \mu_1 \approx \bar{x}_2 - \bar{x}_1$
+
+#### Confidence Intervals
+95% confidence interval for $\mu_2 - \mu_1$:
+$$\bar{x}_2 - \bar{x}_1 \pm c * se(\bar{x}_2 - \bar{x}_1),\space where \\ 
+\text{c is the upper 97.5% percentile in  the t-distribution with n1+n2-2 df}$$
+
+and
+
+$$ se(\bar{x}_2 - \bar{x}_1) = s_p \sqrt{(\frac{1}{n_1} + \frac{1}{n_2})}, \space where \\
+s_p = \sqrt{\frac{n_1-1}{n_1+n_2-2}s_1^2 + \frac{n_2-1}{n_1+n_2-2}s_2^2} $$
+
+#### Test statistic
+
+$H_0:\mu_1 = \mu_2$ versus the (two-sided) alternative $H_A:\mu_1 \neq \mu_2$
+
+We reject for $H_0$ for large values of test statistic |t|:
+
+$$ t = \frac{\bar{x}_2 - \bar{x}_1}{se(\bar{x}_2 - \bar{x})} $$
+
+Under H_0 the test statistic is t-distributed with $n_1+n_2-2$ df. 
+
+P-value (two-sided): $P=2P(T>|t|)$,
+where T is t-distributed with $n_1+n_2-2$ df. 
+
+
+```{r echo = TRUE}
+
+t.test(treat, cont , var.equal=T)
+```
+
+## Robustness & Bootstrapping
+
+### Robustness
+A method is robust if it is valid also when the modeling assumptions do not hold. 
+<br> 
+
+ie. normal distribution assumption --> methods robust with large n because of central limit theorem.
+
+### Bootstrapping
+Increase robustness with small datasets.
+
+1. Resample w/ replacement
+2. Calculate statistic on bootstrap data set
+3. Repeat 1000 times
+4. Sort the bootstrap estimates
+5. Bootsetrap percentile 95% CI from 2.5-97.5% of bootstrap estimates. 
+

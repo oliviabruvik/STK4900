@@ -1,0 +1,207 @@
+---
+title: "STK4900 - Statistical Methods and Applications"
+author: "Olivia Beyer Bruvik"
+date: "6/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lecture 4  {.tabset}
+
+## Topics
+1. Causal effects
+1. Confounding
+1. Interaction
+1. More on ANOVA
+1. Prediction
+
+<https://www.uio.no/studier/emner/matnat/math/STK4900/v21/lectures/lecture4.pdf>
+
+## Causal effects and Confounding
+We are closer to identifying causality after adjusting (or controlling) for known confounders.
+
+A covariate $X_2$ is a confounder for the causal effect of $X_1$ provided that:
+* $X_2$ is a plausible cause of the outcome Y
+* $X_2$ is a plausible cause of predictor $X_1$
+
+We can control for confounding covariates by fitting a linear model,
+$$ y_i = \beta_0 + \beta_1x_{1i} + \beta_2x_{2i}+\epsilon_i, $$
+$$ E(Y) = \alpha + \beta_1x_{1} + \beta_2x_{2} \quad  (1) \\ 
+\text{omitting variable } x_2: \\
+E(Y) = \alpha + bx_{1} \quad  (2) \\ 
+\hat{b} \text{, the least squares estimate of b under model (2):} \\
+\hat{b} = \hat{\beta}_1 + \hat{\beta}_2r_{12}\frac{s_2}{s_1} \quad (3) \\
+therefore, \space if \space r_{12} = 0 \rightarrow \hat{b} \approx \hat{\beta}_1 $$
+
+```{r}
+# hers.nob=hers.no[!is.na(hers.no$BMI),]
+# fit.a=lm(glucose~exercise,data=hers.nob)
+# fit.a$coef
+
+```
+
+```{r}
+# fit.b=lm(glucose~exercise+BMI,data=hers.nob)
+# fit.b$coef
+```
+
+```{r}
+# fit.b$coef[2] + fit.b$coef[3] * cor(hers.nob$exercise, hers.nob$BMI) * s2/s1 * sd(hers.nob$BMI) / sd(hers.nob$exercise)
+# = fit.a$coef
+```
+
+## Mediation
+We should not adjust for variables that are intermediate variables (likely correlated to one variable and causally related to outome)
+
+ie. adjusting for cholesterol measured after taking statins may then hide a causal effect of statins on risk of heart attact (statin -> lower cholesterol -> reduced risk of heart attack)
+
+## Randomization
+Randomization allows us to ignore confounding variables and estimate causation:
+$$ corr(treatment \space x_1, confounder \space x_2) = 0 \rightarrow r \approx 0, \hat{b} \approx \hat{\beta}_1 $$
+
+## Interaction (15) {.tabset}
+Occurs when the effect of a covariate $X_1$ depends on the level of $X_2$. 
+
+NB. Useful to center numerical covariates by subtracting the mean to ease interpretation. 
+
+### Binary covariates
+
+```{r}
+## hers = read.table('https://www.uio.no/studier/emner/matnat/math/STK4900/data/hers.txt', header = T)
+## ht.fit=lm(LDL1~HT+statins+HT:statins, data=hers)
+## summary(ht.fit)
+```
+
+Note: HT:statin specifies the interaction term "HT*statin". 
+
+* $X_1$ reduces Y for $X_2 = 0 \space by \space \hat{\beta}_1$
+* $X_2$ reduces Y by $\hat{\beta}_2$
+* $X_1$ reduces Y for $X_2 = 1$ by $\hat{\beta}_{X_1:X_2}$
+
+```{r}
+## library(contrast)
+## par1= list(HT=1,statins=1) # specify one set of values of the covariates
+## par2= list(HT=0,statins=1) # specify another set of values of the covariates
+## contrast(ht.fit, par1,par2) # compute the difference between the two sets
+```
+
+Another options for interpretating interactions can be to construct a new categorical variabel with one level for each combination of levels of the original factors.
+
+```{r}
+## hers$HTstat=1*(hers$HT==0&hers$statins==0)+2*(hers$HT==1&hers$statins==0) +3*(hers$HT==0&hers$statins==1)+4*(hers$HT==1&hers$statins==1)
+## hers$HTstat=factor(hers$HTstat)
+## ht.fit.b=lm(LDL1~HTstat, data=hers)
+## summary(ht.fit.b)
+```
+
+### One binary and one numerical covariate
+Model with different intercepts and slopes for the numerical covariate depending on the value of the binary covariate.
+
+$$
+\begin{align}
+y_i &= \beta_0+\beta_1x_{1i}+\beta_2x_{2i}+\beta_3x_{1i}x_{2i}+\epsilon_i \\
+ &= \begin{cases}
+ \beta_0+\beta_2x_{2i}+\epsilon_i & when \space x_{1i}=0 \\
+ \beta_0+\beta_1+(\beta_2+\beta_3)x_{2i}+\epsilon_i & when \space x_{1i}=1 \\
+ \end{cases}
+\end{align}
+$$
+
+```{r}
+## hers$cBMI=hers$BMI - mean(hers$BMI[!is.na(hers$BMI)])
+## stat.fit=lm(LDL~statins+cBMI+statins:cBMI,data=hers)
+## summary(stat.fit)
+```
+
+### Two numerical covariates
+
+$$ y_i = \beta_0+\beta_1x_{1i}+\beta_2x_{2i}+\beta_3x_{1i}x_{2i}+\epsilon_i $$
+
+## ANOVA
+
+### Two-way ANOVA
+
+```{r}
+## polymer=read.table("http://www.uio.no/studier/emner/matnat/math/STK4900/v11/polymer.txt",header=T)
+## polymer$ftemp=factor(polymer$temp)
+## polymer$fcat=factor(polymer$cat)
+## fit=lm(rate~ftemp+fcat+ftemp:fcat,data=polymer)
+## summary(fit)
+```
+
+### Balanced design
+* Same number of observations for all the J*K combinations of levels of factor A and B. 
+* Allows for the total sum of squares to be uniquely decomposed as a sum of sqares for each of the two factors (SSA,SSB), a sum of squares for the interaction (SSAB), and a residual sum of squares (RSS):
+
+$$ TSS = SSA + SSB + SSAB + RSS $$
+
+### Hypothesis testing
+
+```{r}
+## anova(fit)
+```
+
+$$ 
+H_0: all \space (\alpha\beta)_{jk} = 0 \quad (\text{no interaction}) \\ 
+H_0: all \space \alpha_j = 0 \quad (\text{no main effect of A)} \\ 
+H_0: all \space \beta_k = 0 \quad (\text{no main effect of A)} \\ 
+$$
+
+
+### Higher level ANOVA
+Data: $y_{ijkl} =$ observation number $i$ for level $a_j$ of factor A, level $b_k$ of factor B, and level $c_l$ of factor C. 
+
+Model with interaction
+$$ y_{ijkl} = \mu + \alpha_j + \beta_k + \gamma_l + (\alpha\beta)_{jk} + (\alpha\gamma)_{jl} + (\beta\gamma)_{kl} + (\alpha\beta\gamma)_{jkl} + \epsilon_{ijkl} $$
+
+Hypothesis testing similar to two-way ANOVA.
+
+## Expected values and prediction with new covariate (34)
+
+Consider a new covariate vector $x^{new} = (x_1^{new}, x_2^{new}, ..., x_p^{new})$
+
+Expectation and prediction of new outcome:
+
+$$ 
+\mu_{new} = \beta_0 + \beta_1x_1^{new} + \beta_2x_2^{new} + ... + \beta_px_p^{new} \\
+t = \frac{\hat{\mu^{new}}-\mu^{new}}{se(\hat{\mu^{new}})} \sim t_{n-p-1} \\
+$$
+
+Confidence intervals for a new outcome: 
+$$ \hat{\mu}^{new} \pm c*se(\hat{\mu}^{new}) $$
+
+
+Prediction intervals for a new outcome:
+$$ \hat{\mu}^{new} \pm c* \sqrt{s_{Y|x}^2 + se(\hat{\mu}^{new})^2} $$
+
+c is a percentile i in the t-distribution with n-p-1 df.
+
+### Simple linear regression
+
+$$ 
+Var(\hat{\mu}^{new}) = \sigma_\epsilon^2(\frac{1}{n}+\frac{(x^{new}-\bar{x})^2}{\sum_i{(x_i-\bar{x})^2}})
+$$
+
+Confidence interval for the expected value:
+
+$$
+\hat{\mu}^{new} \pm c* \sqrt{\frac{1}{n}+\frac{(x^{new}-\bar{x})^2}{\sum_i{(x_i-\bar{x})^2}}}
+$$
+
+Prediction intervals for a new outcome:
+
+$$
+\hat{\mu}^{new} \pm c * \sqrt{1+\frac{1}{n}+\frac{(x^{new}-\bar{x})^2}{\sum_i{(x_i-\bar{x})^2}}}
+$$
+
+```{r}
+## sbpage=lm(sbp~age,data=hers.sample)
+## age=45:80
+## newage=as.data.frame(age)
+## estsbp=predict(sbpage,newage,int="conf")
+## predsbp=predict(sbpage,newage,int="pred")
+```
+

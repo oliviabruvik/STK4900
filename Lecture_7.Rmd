@@ -1,0 +1,144 @@
+---
+title: "STK4900 - Statistical Methods and Applications"
+author: "Olivia Beyer Bruvik"
+date: "6/13/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lecture 8  {.tabset}
+
+```{r, include = FALSE}
+cigarettes=read.table("https://www.uio.no/studier/emner/matnat/math/STK4900/data/sigarett.txt", header=T)
+```
+
+## Topics
+1. Poisson distribution (3)
+1. Poisson regression (14)
+1. Generalized linear models (21)
+
+<https://www.uio.no/studier/emner/matnat/math/STK4900/v21/lectures/lecture8.pdf>
+
+## Poisson distribution
+An appropriate model for "rare events" that are happening "randomly over time/space"
+
+Arises as:
+
+* an approximation to the distribution of $Y \sim bin(n,p)$ when *p* is small and *n* is large ($\lambda = np$)
+* from a Poisson process
+
+$$
+P(Y=y) = \frac{\lambda^y}{y!} e^{-\lambda}, \quad y = 0,1,2,... \\
+Y \sim Po(\lambda) \\
+E(Y) = Var(Y) = \lambda
+$$
+
+### Poisson approximation to the binomial distribution
+
+$$
+\binom{n}{p} p^y (1-p)^{n-y} \approx \frac{\lambda^y}{y!} e^{-\lambda}
+
+$$
+
+### Poisson process {.tabset}
+
+#### Time
+
+Let Y be the number of events in an interval of length t:
+
+$$
+Y \sim Po(\lambda t)
+$$
+
+##### Assumptions
+1. the rate of events \lambda is constant over time (rate = expected number of events per unit of time)
+1. the number of events in disjoint time-intervals are independent
+1. events do not occur together
+
+
+#### Space
+
+Let Y be the number of events in an area of size a:
+
+$$
+Y \sim Po(\lambda a)
+$$
+
+##### Assumptions
+1. the rate of points \lambda is constant over the region (rate = expected number of points in an area of size 0)
+1. the number of events in disjoint areas are independent
+1.points do not coincide
+
+### Overdispersion
+The expected value and variances are both estimates of \lambda and therefore approximately equal:
+
+$$
+\bar{y} = \frac{1}{n} \sum_{i=1}^n y_i \\
+s^2 = \frac{1}{n-1} \sum_{i=1}^n (y_i - \bar{y})^2
+$$
+
+#### Coefficient of dispersion
+
+$$
+CD = \frac{s^2}{\bar{y}} \\
+CD >> 1 \rightarrow overdispersion
+$$
+
+### Test of Poisson distribution
+
+Data: $y_1, y_2, ..., y_n$
+Null: $H_0: $ data are Poisson distributed
+
+1. Estimate (MLE): $\hat{\lambda} = \bar{y}$
+1. Compute expected frequencies under $H_0: E_j = n \times \frac{\hat{\lambda}^j}{j!} e^{-\hat{\lambda}}
+1. Compute observed frequencies: $O_j = n(y_i) \text{ equal to j}
+1. Aggregate (K) groups with small expected numbers, so that all $E_j's \geq 5$.
+1. Compute Pearson chi-square statistic:
+
+$$ X^2 = \sum{\frac{(O_j - E_j)^2}{E_j}} \sim K-2 $$
+
+If $p > 0.25$, the Poisson distribution fits nicely to the data.
+
+## Poisson regression
+
+$$
+\begin{align}
+\lambda_{i} &= \lambda(x_{1i}, x_{2i}, ..., x_{pi}) \\
+&= e^{\beta_0 + \beta_1x_{1i} + \beta_2x_{2i}+...+\beta_px_{pi}}
+\end{align}
+$$
+
+### Data
+$$
+y_i, x_{1i}, x_{2i},...,x_{pi} \quad i=1,...,n \\
+\begin{align}
+y_i &= \text{a count for subject } i \\
+x_{ji} &= \text{predictor (covariate) j for subject i}
+\end{align}
+$$
+
+### Assumptions
+* responses $y_i$ are realizations of independent Poisson distributed random variables $Y_i \sim Po(\lambda_i)$
+* $\lambda_i = \lambda(x_{1i}, x_{2i}, ..., x_{pi})$ is a function of the covariates
+
+
+### Rate ratio (RR)
+$e^{\beta_1 \Delta}$ is the rate ratio corresponding to one unit's increase in the value of the first covariate *holding all other covariates constant*
+
+$$
+\begin{align}
+RR &= \frac{\lambda(x_1 + \Delta, x_2, ..., x_p)}{\lambda(x_1, x_2, ..., x_p)} \\
+&= \frac{
+exp(\beta_0 + \beta_1(x_{1} + \Delta) + \beta_2x_{2}+...+\beta_px_{p})}
+{exp(\beta_0 + \beta_1x_{1} + \beta_2x_{2}+...+\beta_px_{p})} \\
+&= e^{\beta_1 \Delta}
+\end{align}
+$$
+
+### Aggregated counts (grouped)
+
+An $Y_i \sim Po(w_i \lambda_i)$
+

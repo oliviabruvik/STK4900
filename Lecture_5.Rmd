@@ -1,0 +1,358 @@
+---
+title: "STK4900 - Statistical Methods and Applications"
+author: "Olivia Beyer Bruvik"
+date: "6/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lecture 5  {.tabset}
+
+```{r, include = FALSE}
+cigarettes=read.table("https://www.uio.no/studier/emner/matnat/math/STK4900/data/sigarett.txt", header=T)
+```
+
+## Topics
+1. Checking model assumptions (2)
+1. Selection of predictors (23)
+1. Generalized Additive Models (GAM) (19)
+1. High dimensional regression (33)
+
+<https://www.uio.no/studier/emner/matnat/math/STK4900/v21/lectures/lecture5.pdf>
+
+## Checking model assumptions
+
+### Assumptions for linear regression {.tabset}
+
+$$ y_i = \eta_i + \epsilon_i $$
+
+Plots of the residuals may be used to check:
+
+1. Linearity
+1. Constant variance
+1. Normal errors
+
+#### Linearity
+
+$$ \eta_i = \beta_0 + \beta_1x_{1i} + \beta_2x_{2i} + ... + \beta_px_{pi} $$
+If the model is linear in all predictors, except the j-th:
+$$ \eta_i = \beta_0 + \beta_1x_{1i} + ... + \beta_{j-1}x_{j-1,i} + f_j(x_{ji})+\beta_{j+1}x_{j+1,i} ... + \beta_px_{pi} $$
+
+We can estimate the function $f_j(x)$ with a CPR plot.
+
+<br>
+
+##### Check of linearity
+Component-plus-residual (CPR) plot of the partial residuals, $\hat{\beta}_jx_{ji} + r_i$, versus the values of the predictor, $(x_{ji})$. 
+
+```{r, include = FALSE}
+library(car)
+trees=read.table("http://www.uio.no/studier/emner/matnat/math/STK4900/data/trees.txt",header=T)
+
+```
+
+```{r}
+### Fit a model w/ volume as outcome and diameter and height as predictors, and make a CPR plot for diameter:
+fit.both=lm(volume~diameter+height, data=trees)
+
+## The plot indicates that a second degree polynomial may be more appropriate:
+crPlots(fit.both, terms=~diameter)
+
+```
+
+```{r}
+### Fit a model that also has a second degree term for diameter, and make a CPR plots for diameter and diameter^2:
+fit.sq=lm(volume~diameter+I(diameter^2)+height, data=trees)
+
+## The plot indicate that the linearity assumption is reasonable both for diameter and diameter^2 (ie. linearity in the parameters)
+crPlots(fit.sq,terms=~diameter+I(diameter^2))
+
+```
+
+<br> 
+
+##### The importance of model assumptions
+
+Non-linearity leads to wrong specification of the systematic part of the model, which can result in:
+
+1. Effect of a predictor may be wrongly estimated
+1. Important predictor not detected
+1. Serious nonlinearity jeopardizes analysis
+
+<br>
+
+##### Model misfit and possible improvements 
+
+1. Transform $x_{ji}$, e.g. $log(x_{ji})$
+1. Transform $y_{ji}$, e.g. $log(y_{ji})$
+1. Include second order term(s) and/or interaction(s)
+1. GAM
+
+#### Constant variance (homoscedasticity)
+
+$$ Var(\epsilon_i) = \sigma_\epsilon^2 \quad for \space all \space i $$
+There should be no systematic patterns in the residuals. 
+
+##### Check of homoscedasticity
+A plot of the residuals versus the fitted (or predicted) values.
+
+Fan like shape: the variances increase/decrease with expected outcome. 
+
+NB. Don't trust the fitted lines where there is little data. 
+
+```{r}
+fit.sq=lm(volume~diameter+I(diameter^2)+height, data=trees)
+
+## Reasonable, but some indication of increasing variances
+plot(fit.sq$fit, fit.sq$res, xlab="Fitted values", ylab="Residuals")
+
+## Added line used to detect pattern in the residuals due to non-linearities
+plot(fit.sq,1)
+
+## Added line used to detect increasing variance (or standard deviation)
+plot(fit.sq,3)
+```
+
+
+##### The importance of model assumptions
+
+If the variances aren't equal and/or the errors are correlated:
+
+1. Flawed prediction intervals
+1. The estimates of the $\beta_j's$ will be unbiased
+1. Wrongly estimated standard errors
+1. Flawed CI and p-values
+
+##### Model misfit and possible improvements 
+1. Transform $x_{ji}$, e.g. $log(x_{ji})$ \space or \space $\sqrt{x_{ji}}$
+1. Use weighted least-squares
+1. GAM
+
+#### Normally distributed errors
+
+The residuals should behave as a sample from a normal distribution with mean zero:
+
+$$ \epsilon_i \sim N(0,\sigma_\epsilon^2) $$
+##### Check of normality
+
+1. Histogram of residuals
+1. Boxplot of residuals
+1. Normal Q-Q plot of residuals
+
+```{r}
+hist(fit.sq$res)
+boxplot(fit.sq$res)
+
+## The Q-Q plot should be close to a straight line if the residuals are normally distributed.
+qqnorm(fit.sq$res); qqline(fit.sq$res) ## Alternative: plot(fit.sq,2)
+```
+
+##### The importance of model assumptions
+
+If normality not present, but other assumptions true:
+1. Valid estimates of standard errors
+1. Test statistics are not t- and F-distributed for small n
+1. The distributional assumptions are not critical
+
+##### Model misfit and possible improvements 
+
+1. Transform $y_i$
+1. Bootstrap
+1. Ignore problem for large n
+
+#### Influential observations
+It's useful to inspect observations that have a large influence on the estimates.
+<br>
+A measure for the influence of an observation is the change in the estimate(s) when the model is fitted leaving out the observation:
+
+```{r}
+# fit=lm(erosion~water)
+#summary(fit)
+# dfbeta(fit)
+
+## dfbetas(fit) with an s gives the standardized dfbetas that may be more appropriate for multiple linear regression when the predictors are on different scales
+# dfbetas(fit) 
+```
+
+
+```{r}
+fit.cig=lm(co~nicot+tar,data=cigarettes)
+boxplot(dfbeta(fit.cig))
+boxplot(dfbetas(fit.cig))
+```
+
+##### The importance of model assumptions
+* A few influential observations may have large effects on the estimates. 
+* Critical for conclusions on the relations btw covariates and response.
+
+##### Model misfit and possible improvements 
+1. Check the coding of the observations
+1. Validate the estimates by running the regression without the influential observations
+
+#### Uncorrelated errors
+$$ Cov(\epsilon_i,\epsilon_j) = 0 \quad for \space all \space i \neq j $$
+
+The importance of model assumptions
+Model misfit and possible improvements 
+
+
+## Generalized Additive Models (GAM)
+
+1. Extension of linear model
+1. CI estimation for estimated curves
+1. Test whether there is significant non-linearity in the models
+
+### Model
+Assume a general functional dependency on the covariates:
+
+$$ \eta_i = \beta_0 + f_1(x_{1i}) + f_2(x_{2i}) + ... + f_p(x_{pi}) $$
+### Assumptions
+1. The functions are smooth:
+  * continuous
+  * have derivatives
+
+```{r}
+library(gam)
+fit.gam.both=gam(volume~s(diameter)+s(height), data=trees)
+par(mfrow=c(1,2))
+plot(fit.gam.both,se=T)
+
+## force the dependency on height to be linear:
+fit.gam.dia=gam(volume~s(diameter)+height, data=trees)
+```
+
+### Analysis of plots
+
+diameter-function (diameter - s(diameter)): 
+<br>
+Forcing a straight line within the confidence limits impossible $\rightarrow$ significant non-linearity.
+
+height-function (height - s(height)):
+<br>
+Forcing a straight line within the confidence limits possible $\rightarrow$ no important non-linearity. 
+  
+### Anova table
+
+```{r}
+fit.gam.dia=gam(volume~s(diameter)+height, data=trees)
+anova(fit.both,fit.gam.dia,fit.gam.both)
+```
+
+  
+Analysis: 
+
+* non-linearity for diameter is significant
+* there's no reason to include a non-linear term for height.  
+
+## Selection of predictors
+
+### Objectives:
+
+1. Study one predictor while adjusting for others
+1. Identify important predictors for an outcome
+1. Predict the outcome for a new unit where only the values of the predictors are available
+
+### Strategies to decide which sub-models to consider {.tabset}
+
+#### Forward selection
+
+1. Fit all *p* models with only one predictor
+1. Choose highest-contributing predictor
+1. Run *p-1* regressions with this predictor and another
+1. Choose the model that "fits" best
+1. Continue adding predictors until "no improvement"
+
+#### Stepwise regression
+
+Forward regression, but supplement step 4. with the deletion of predictors that no longer contribute.
+
+#### Backward selection
+
+1. Fit the model with all *p* predictors
+1. Compare the model with all predictors with the *p* different models where one predictor has been left out
+1. Leave out the "least important predictor"
+1. Compare the model obtained with the *p-1* different models where one predictor has been left out
+1. Leave out the "least important predictor"
+1. Continue until a model is obtained that only contains the "important" predictors
+
+### Criteria for inclusion / exclusion
+
+Possibilities for inclusion of predictors:
+
+P-values
+
+  * 5% cutoff often used
+  * suitable when the object is to study the effect of one predictor, or
+  * to identify important predictors for an outcome
+  
+Ordinary $R^2$
+
+  * Draw-back: will always increase when predictors are added.
+  
+Adjusted $R^2$
+
+  * penalizes including more predictors
+  * May be used to select predictors as it will have a maximum $R^2$ over the models considered
+  * Drawback: observations are used twice (estimate the $\beta_j's$ and evaluate the predictions of $y_i's$).
+
+Cross-validated $R^2$
+
+  * Cross validation: stimate the regression model without using the observation $y_i$ and predict $\hat{y}_i^{(-i)}$, $y_i$ using the obtained estimates
+  * May be used to select predictors
+  * Will often give smaller models than $R_{adj}^2$. 
+
+## High dimensional regression {.tabset}
+
+For data with more covariates than observations ($p > n$).
+
+For p <n, in Ordinary Least Squares Regression, we minimize the MSE so that:
+
+$$ \hat{\beta} = argmin_{\beta}(y-X\beta)^2 $$
+
+<br>
+
+### Lasso regression (L1 penalty)
+
+$$ \hat{\beta} = argmin_{\beta}(y-X\beta)^2 + \lambda||
+\beta||_1 $$
+
+Variable selection:
+
+* Leads to shrinkage of the coefficients
+* Zeros out the coefficients of the unimpotant variables
+* The size of $\lambda$ determines the amount of zero coefficients (may be chosed via K-fold cross-validation)
+
+$$ PRSS_y^{lasso}(\beta) = \sum_{i=1}^n(y_i-\beta_0-\sum_{j=1}^px_{ij}\beta_j)^2 + \lambda\sum_{j=1}^p{|\beta_j|} $$
+
+#### Assumptions
+Sparsity: only a few of the p covariates matter
+
+```{r}
+library(glmnet)
+
+## Gaussian family because of the continuous response and normal noise 
+## Alpha = 0 is ridge regression
+#cv.fit.lasso=cv.glmnet(x,y,family="gaussian",alpha=1)
+
+## Find lamba value that minimizes the CV-curve
+#lambda.min=cv.fit.lasso$lambda.min
+
+## Get the estimated coefficients for lambda.min
+#beta.lasso=coef(cv.fit.lasso, s=lambda.min)
+```
+
+### Ridge regression (L2 penalty)
+
+$$ \hat{\beta} = argmin_{\beta}(y-X\beta)^2 + \lambda||
+\beta||_2^2$$
+
+No variable selection:
+
+* shrinks the coefficients:
+  * introduces bias
+  * reduces variance of the estimators
+
+$$ PRSS_y^{ridge}(\beta) = \sum_{i=1}^n(y_i-\beta_0-\sum_{j=1}^px_{ij}\beta_j)^2 + \lambda\sum_{j=1}^p{\beta_j^2} $$

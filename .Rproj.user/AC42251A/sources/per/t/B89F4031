@@ -1,0 +1,26 @@
+{
+    "id": "B89F4031",
+    "path": "~/Desktop/CS/STK4900/Lecture_3.Rmd",
+    "project_path": "Lecture_3.Rmd",
+    "type": "r_markdown",
+    "hash": "3185493438",
+    "contents": "",
+    "dirty": false,
+    "created": 1623404268606.0,
+    "source_on_save": false,
+    "relative_order": 3,
+    "properties": {
+        "tempName": "Untitled1",
+        "cursorPosition": "306,22",
+        "scrollLine": "340",
+        "last_setup_crc32": "E61BC76Cbb338d19"
+    },
+    "folds": "13|9|21|0|\n22|20|213|0|\n121|31|126|0|\n127|29|132|0|\n",
+    "lastKnownWriteTime": 1623425565,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1623425565473,
+    "read_only": false,
+    "read_only_alternatives": []
+}

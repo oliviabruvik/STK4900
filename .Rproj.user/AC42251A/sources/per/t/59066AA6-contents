@@ -1,0 +1,20 @@
+---
+title: "STK4900 - Statistical Methods and Applications"
+subtitle: "Compiled Lecture Notes"
+author: "Olivia Beyer Bruvik"
+date: "Spring 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+options(knitr.duplicate.label='allow')
+```
+
+```{r child = "Lecture_1.Rmd"}
+```
+
+```{r child = "Lecture_2.Rmd"}
+```
+
+```{r child = "Lecture_3.Rmd"}
+```

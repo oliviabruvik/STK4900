@@ -1,0 +1,420 @@
+---
+title: "STK4900 Mandatory Assignment 2"
+author: "Olivia Beyer Bruvik"
+date: "Due 22/4/2021"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+library(ggplot2)
+library(dplyr)
+library(kableExtra)
+
+```
+
+# Problem 1a
+```{r problem_1, include = FALSE}
+
+## read in crabs.txt data
+crabs_data <- read.table('https://www.uio.no/studier/emner/matnat/math/STK4900/v21/obliger/crabs.txt', header=T)
+
+## view start of data
+head(crabs_data)
+
+## view end of data
+tail(crabs_data)
+
+```
+
+I have chosen to use a logistic regression model to study how the probability of presence of satellites depends on the explanatory variable width. Logistic regression is a suitable model for this data, because it models the probabilities within a range of {y | 0, 1}. In contrast, a linear model, such as an additive risk model, would give unreasonable values for probabilities, such as a negative probability or probabilities over 1.
+
+To perform logistic regression, I will regress the explanatory variable the female crab's carapace width in cm onto the binary indicator y, which indicates whether one or more satellites were present.
+
+The estimates for the intercept ($\hat{\beta}_0$) and width ($\hat{\beta_1}$) are -12.351 and 0.497, respectively. The p-values are 2.62e-06 and 1.02e-06 for the intercept and width coefficients, suggesting that these results are significant. The full model output is shown below.
+
+This gives the fitted model below, from which we can estimate the probability that one or more satellites are present given a female crab's carapace width in centimeters.
+
+\begin{align}
+\Large \hat{p}(w) = \frac{e^{-12.351 +  0.497 * w}}{1 + e^{-12.351 +  0.497 * w}} \\
+ \\
+\text{where: }
+& w = \text{the female crab's carapace width (cm)}
+\end{align}
+
+```{r problem_2.1a, out.width = "70%", echo = FALSE}
+fit.binary.crabs.width =glm(y~width,
+               data=crabs_data,
+               family=binomial)
+summary(fit.binary.crabs.width)$coef %>% 
+        kbl() %>% 
+        kable_styling()
+
+#predict(fit.binary.crabs.width, type="response", data.frame(width=30))
+
+```
+
+## Problem 1b
+
+### Odds of presences of satellites
+The odds of presences of satellites is the probability of presence of satellites divided by the probability of absence of satellites. The odds for a female crab with a carapace width $w$ is given by:
+
+\begin{align}
+\Large \frac{p(w)}{1-p(w)} = e^{-12.351 + 0.497 * w} \\
+ \\
+\text{where: }
+& w = \text{the female crab's carapace width (cm)}
+\end{align}
+
+### Odds ratio calculation
+From this formula, we can calculate the odds ratio of presences of satellites between crabs that differ one cm in width as follows:
+
+\begin{align}
+\Large \frac{\frac{p(w+1)}{1-p(w+1)}}{\frac{p(w)}{1-p(w+1)}} = \frac{e^{\hat{\beta}_0 + 0.497 (w+1)}}{e^{\hat{\beta_0} + 0.497w}} = e^{0.497} \\
+\text{where: }
+& w = \text{the female crab's carapace width (cm)}
+\end{align}
+
+The odds ratio $e^{0.497}$ indicates that the odds of presences of satellites increases by a factor of $e^{0.497}$ per unit increase in the width of a female crab's carapace. In other words, a wider carapace is associated with higher odds of satellite presence. For example, the odds of presences of satellites for a crab with a carapace width of 29cm will be $e^{0.497}$ times higher than that of a crab with a carapace width of 28cm.
+
+### Odds ratio and relative risk
+The odds ratio can be considered as an approximation to a relative risk when the probabilites of presence of satellites are small for both widths considered: $p(w_1) << 1$ and $p(w_2) << 1$. Therefore, this approximation is only valid for crabs with a width below a certain number of centimeters, for example 22 cm. 
+
+```{r rr, include = FALSE}
+p_22 = predict(fit.binary.crabs.width, type="response", data.frame(width=22))
+p_21 = predict(fit.binary.crabs.width, type="response", data.frame(width=21))
+
+p_31 = predict(fit.binary.crabs.width, type="response", data.frame(width=31))
+p_30 = predict(fit.binary.crabs.width, type="response", data.frame(width=30))
+```
+
+For crabs with carapace widths of 22 and 21 cm, the odds ratio is $e^{0.497} = 1.64378$, whereas the relative risk is $RR = \frac{p(22)}{p(21)} =$ `r p_22 / p_21`. This is a reasonable approximation. 
+
+In contrast, for crabs with carapace widths of 31 and 30 cm, the odds ratio is $e^{0.497} = 1.64378$, whereas the relative risk is $RR = \frac{p(31)}{p(30)} =$ `r p_31 / p_30`. This is not a reasonable approximation, and odds ratio can no longer be approximated to relative risk. 
+
+### Confidence intervals for the odds ratio
+The confidence intervals for the odds ratio are calculated as follows:
+
+95% confidence intervals for the width coefficient, $\hat{\beta_1} = 0.4972: \\ CI(\hat{\beta}_1) = \hat{\beta}_1 \pm 1.96 * se(\hat{\beta}_1) \\ CI(\hat{\beta}_1) = 0.4972 \pm 1.96 * 0.1017 \\ CI(\hat{\beta}_1): 0.299-0.697$
+
+95% confidence intervals for the odds ratio (OR = 0.4972): <br>
+$CI(OR): e^{0.297868}-e^{0.696532} \\ CI(OR): 1.3469-2.007$
+
+The odds ratio with confidence intervals is therefore $1.3469 < 1.644 < 2.007$, and can be concluded to be significant as even the lower end of the confidence interval is more than one. 
+
+## Problem 1c
+Next, I looked at each covariate individually. The results for each logistic regression model are summarized in the table below, where covariates are given in the column labeled "Cov". 
+
+```{r problem_2.1c, echo = FALSE}
+## Function that summarizes call
+summary_call <- function(glmobj, cov, cat) {
+        regtab=round(summary(glmobj)$coef, 3)
+        colnames(regtab) = c("Estimate", "SE", "z-value", "p-value")
+        Cov=rep(cov, length(regtab[,2]))
+        Cat=rep(cat, length(regtab[,2]))
+        OR=round(exp(regtab[,1]), 3)
+        Lower=round(OR*exp(-1.96*regtab[,2]), 3)
+        Upper=round(OR*exp(1.96*regtab[,2]), 3)
+        table = data.frame(Cov, Cat, regtab, OR, Lower,Upper)
+        return(table)
+}
+
+width <- summary_call(fit.binary.crabs.width, "Width", "No")
+
+# weight (continuous)
+fit.binary.crabs.weight =glm(y~weight,
+               data=crabs_data,
+               family=binomial)
+weight <- summary_call(fit.binary.crabs.weight, "Weight", "No")
+
+## color (categorical - qualitative)
+fit.binary.crabs.color =glm(y~factor(color),
+               data=crabs_data,
+               family=binomial)
+color <- summary_call(fit.binary.crabs.color, "Color", "Yes")
+
+## spine (categorical)
+fit.binary.crabs.spine =glm(y~factor(spine),
+               data=crabs_data,
+               family=binomial)
+spine <- summary_call(fit.binary.crabs.spine, "Spine", "Yes")
+
+summaries <- rbind(width, weight, color, spine)
+
+summaries %>% 
+        kbl() %>% 
+        kable_styling()
+
+# fit.width <- glm(y~width,
+#                data=crabs_data,
+#                family=binomial)
+# 
+# fit.width.weight <- glm(y~width+weight,
+#                data=crabs_data,
+#                family=binomial)
+# 
+# fit.width.weight.spine <- glm(y~width+weight+factor(spine),
+#                data=crabs_data,
+#                family=binomial)
+# 
+# fit.width.weight.spine.color <- glm(y~width+weight+factor(spine)+factor(color),
+#                data=crabs_data,
+#                family=binomial)
+# 
+# anova(fit.width, fit.width.weight, fit.width.weight.spine, fit.width.weight.spine.color, test = "Chisq")
+```
+### Categorical and numerical covariates
+The "Cat" column gives information about whether the covariate was included as a categorical or numerical value. As can be seen in the table, the width and weight covariates were included as numerical covariates because they are continuous (ie. measured in cm and kg). Color and spine were included as categorical covariates. 
+
+### Selection of variables
+The weight covariate is statistically significant (p < 0.05) with an intercept of -3.695, a $\hat{\beta_1}$ of 1.815, and an odds ratio of 2.933 < 6.141 < 12.857. This suggests that weight has a significant influence on the presence of satellites.
+
+The color variable is only significant for color 4, with a p-value of 0.021, $\hat{\beta_1}$ of -1.861, and an odds ratio of 0.032 < 0.156 < 0.762. The odds ratio is below one, suggesting that a change from color 1 to color 4 will decrease the odds of presence of satellites. This suggests that while changing the color from color 1 to 2 or 3 has no influence on the presence of satellites, changing the color to color 4 does have a slight albeit limited influence.
+
+From the table, we can see that changing from spine 1 (both good) to spine 2 or spine 3 has no significant influence on the presence of satellites (p > 0.05).
+
+## Problem 1d)
+
+I have chosen to include weight and width as covariates in my model. The spine variable had no significant influence on the presence of satellites. Further, the color variable had a slight influence on the presence of satellites (color 1 vs 4); however, I will not include this variable for simplicity.
+
+To perform logistic regression, I will regress the explanatory variables, the female crab's weight (kg) carapace width (cm) onto the binary indicator y, which indicates satellite presence. The binomial family is used.
+
+```{r, echo = FALSE}
+fit.binary.crabs.all =glm(y~weight+width,
+               data=crabs_data,
+               family=binomial)
+
+summary(fit.binary.crabs.all)$coef %>% 
+        kbl() %>% 
+        kable_styling()
+#$call
+#all <- summary_call(fit.binary.crabs.all, "Weight", "No")
+#all.df <- as.data.frame(all)
+#all.df <- select(all.df, -Cov, -Cat)
+#all.df
+```
+
+As can be seen in the summary above, the neither weight (p=0.214) not width (p=0.092) are significant covariates in this model. This may be due to correlation between width and weight of female crabs in this dataset. The Pearson's correlation coefficient between the two variables are `r cor(crabs_data$weight, crabs_data$width)`). This is a significant correlation and has, as can be seen in the p-values, impacted the model as variables should be independent. 
+
+## Problem 1e
+Here, interactions between covariates will be explored. As can be seen in the summary below, there does not appear to be any significant interactions between the variables (p > 0.05). Individual interactions between different covariates were also analyzed independenlty, but no significant interactions were detected.
+
+```{r, echo = FALSE}
+fit.int =glm(y~weight+width+factor(spine)+factor(color)+weight*width+factor(spine)*factor(color),
+               data=crabs_data,
+               family=binomial)
+
+summary(fit.int)$coef %>% 
+        kbl() %>% 
+        kable_styling()
+
+```
+
+## Problem 2a
+```{r, include = FALSE}
+## read in olympic.txt data
+ol_data <- read.table('https://www.uio.no/studier/emner/matnat/math/STK4900/v21/obliger/olympic.txt',sep="\t", header=T)
+
+## view start of data
+head(ol_data)
+
+## view end of data
+tail(ol_data)
+
+```
+
+### Poisson regression
+Poisson regression is a generalized linear model: <br>
+$Y_i \sim P_o(\lambda_i)$, where $\lambda_i = \lambda(x_{1i}, x_{2i}, ..., x_{pi}) = e^{\beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + ... + \beta_p x_{pi}}$
+
+A Poisson regression model is suitable to model the olympic data because winning an olympic gold medal is an event that happens randomly over time. In this model, the outcome variable is the total number of gold medals per country in the 2000 Olympics and the predictors are the log-transformed population per country, GDP per capita per country and total number of gold medals won in the 19996 Olympics per country. 
+
+### Offset terms
+Log.athletes is included in the model as an offset term, a covariate where the regression coefficient is known to equal 1. Log.athletes is a sensible choice for such an offset because it is highly correlated with Total2000 with a pearson correlation coefficient of 0.682. The Log.athletes coefficient for a Total2000~Log.athletes regression model is 1.236, which is close to 1.0. By including Log.athletes on our model, we are modelling the following: 
+$Y_i \sim P_o(a_i\lambda_i)$, where $a_i$ is the number of athletes representing country i, given by exp(Log.athletes).
+
+### Model variables
+The model, summarized below, shows that Total1996 (p = 1.79e-13), the total gold medals won in the 1996 Olympics, and GDP.per.cap (p = 3.29e-06), the GDP per capita, are significant predictors of the total gold medals won in the 2000 Olympics
+
+### Rate ratios
+The rate ratio (RR) for a specific coefficient $\beta _x$ in a Poisson regression model is given by $RR = e^{\beta _x \Delta}$, where $\beta _x$ is a coefficient and $\Delta$ is the difference between the values for two countries for coefficient $\beta _x$. 
+
+The rate ratio for the Total1996 coefficient in this model is $RR = e^{0.0118 \Delta = 1.01187 \Delta}$, holding all else constant. This ratio is above 1, suggesting that the number of medals won at the 1996 is positively associated with the number of medals won at the 2000 Olympics.
+
+```{r, echo = FALSE}
+fit.ol=glm(Total2000~Total1996+Log.population+offset(Log.athletes)+GDP.per.cap, data=ol_data,family=poisson)
+summary(fit.ol)$coef %>% 
+        kbl() %>% 
+        kable_styling()
+
+```
+
+## Problem 2b)
+
+### Choosing variables
+
+I used an analysis of variance table to select the most reasonable model for the data. I started with this model: log_medals_per_athlete ~ offset(Log.athletes) + Total1996. I then added various variables. As can be seen below, the addition of the GDP.per.cap variable to the model was significant (p = 0.009).
+
+
+```{r echo = FALSE}
+ol_data <- ol_data %>%
+        mutate(log_medals_per_athlete = Total2000 / Log.athletes)
+
+fit.1996 = glm(log_medals_per_athlete~offset(Log.athletes)+Total1996, data=ol_data,family=poisson)
+fit.1996.pop = glm(log_medals_per_athlete~offset(Log.athletes)+Total1996+Log.population, data=ol_data,family=poisson)
+fit.1996.gdp = glm(log_medals_per_athlete~offset(Log.athletes)+Total1996+GDP.per.cap, data=ol_data,family=poisson)
+fit.1996.pop.gdp = glm(log_medals_per_athlete~offset(Log.athletes)+Total1996+Log.population+GDP.per.cap, data=ol_data,family=poisson)
+fit.1996.gdp.int = glm(log_medals_per_athlete~offset(Log.athletes)+Total1996+GDP.per.cap + GDP.per.cap*Log.population, data=ol_data,family=poisson)
+
+anova(fit.1996,fit.1996.gdp,fit.1996.pop.gdp, fit.1996.gdp.int, test="Chisq")
+```
+### Final model
+
+This model indicates that the rate ratio corresponding to one unit's increase in the number of medals won at the 1996 Olympics is $RR = e^{0.009 \Delta} = 1.009 \Delta$, holding all else constant. The rate ratio is greater than 1, suggesting that the number of medals won at the 1996 is positively associated with the number of medals won per log athlete at the 2000 Olympics. 
+
+The rate ratio for gdp per capita is $RR = e^{-0.018 \Delta} = 0.982161 \Delta$, holding all else constant. This rate ratio is slightly less than one, suggesting that the gdp per capita is negatively associated with the number of medals won per log athlete at the 2000 Olympics.
+
+```{r, echo = FALSE}
+summary(fit.1996.gdp)$coef %>% 
+        kbl() %>% 
+        kable_styling()
+```
+
+## Problem 3a
+```{r, include = FALSE}
+## read in crabs.txt data
+cir_data <- read.table('https://www.uio.no/studier/emner/matnat/math/STK4900/v21/obliger/cirrhosis.txt', header=T)
+
+## view start of data
+head(cir_data)
+
+## view end of data
+tail(cir_data)
+```
+
+The Kaplan-Meier plots below shows the survival functions for each level of the covariates treatment, sex, ascites and age group. The levels for each covariate are indicated in the legend on each plot.
+
+The first plot shows the survival functions for two different treatment groups: the group that received Prednisone and the the group that received a placebo. The plot indicates that the group on prednisone treatment has a similar survival time as compared with the group on placebo. The survival for the prednisone has a more steeper slope than the placebo for t < 250, but intersects the placebo survival function at around t = 950. The survival decreases with approximately the same rate for the two groups between 1000 < t < 3000, but intersects again at t = 3300. This suggests that while prednisone treatment does not increase survival, it may increase the median time to the event death, albeit slightly.
+
+The second Kaplan-Meier plot shows the survival functions for female and male subjects. The plot indicates that the survival function is very similar for both sexes for t < 1000 days; however, the survival function for female subjects is less steep than the survival function for male subjects. This suggests that liver cirrhosis may be more deadly for male than female patients. An interesting point to note is the drop in survival for females at t = 3500 days. The plot suggests that a significant proportion of the female study participant either left the study at this day or died.
+
+The third figure plots the survival function by the prevalence of ascites at the start of treatment, grouped by none, slight and marked. The survival functions become steeper as the prevalence of ascites increases. As such, the median time to death is significantly longer for the group in the none level than the two other: $\hat{S}_{marked}(t_m) < \hat{S}_{slight}(t_m) < \hat{S}_{none}(t_m)$, where $t_m$ is the median time to death. 
+
+The fourth plot gives the survival functions by age group. As can be seen in the plot, while all group start with a survival of 1, the survival decreases markedly faster as the age range increases: $\hat{S}_{<50y}(t_m) < \hat{S}_{50-65y}(t_m) < \hat{S}_{>65y}(t_m)$, where $t_m$ is the median time to death. This suggests that the hazard is greater for older patients. 
+
+<br>
+
+``` {r figures-side, fig.show="hold", out.width="50%"}
+library(survival)
+
+survpred.all=survfit(Surv(time,status)~1, data = cir_data, conf.type="none")
+
+survpred.treat=survfit(Surv(time,status)~treat, data = cir_data, conf.type="plain")
+plot(survpred.treat,
+     lty=1:2,
+     xlab = "Time (days)",
+     ylab= "Survival",
+     main = "Survival Functions by Treatment Level",)
+legend(5,0.2,c("Prednisone","Placebo"),lty=1:2)
+
+survpred.sex=survfit(Surv(time,status)~sex, data = cir_data, conf.type="plain")
+plot(survpred.sex,
+     lty=1:2,
+     xlab = "Time (days)",
+     ylab= "Survival",
+     main = "Survival Functions by Sex")
+legend(5,0.2,c("Female","Male"),lty=1:2)
+
+survpred.asc=survfit(Surv(time,status)~asc, data = cir_data, conf.type="plain")
+plot(survpred.asc,
+     lty=1:2,
+     xlab = "Time (days)",
+     ylab= "Survival",
+     main = "Survival Functions by Ascites Prevalence at Start of Treatement")
+legend(5,0.2,c("None","Slight","Marked"),lty=1:2)
+
+survpred.agegr=survfit(Surv(time,status)~agegr, data = cir_data, conf.type="plain")
+plot(survpred.agegr,
+     lty=1:2,
+     xlab = "Time (days)",
+     ylab= "Survival",
+     main = "Survival Functions by Age Group")
+legend(5,0.2,c("<50 years","50-65 years",">65 years"),lty=1:2)
+
+
+```
+
+## Problem 3b
+
+We can test the null hypothesis that the survival function is the same for two groups, $H_0: S_1(t) = S_2(t)$ for all t, with the Logrank test.
+
+```{r, include = FALSE}
+survdiff_treat <- survdiff(Surv(time,status)~treat, data=cir_data)
+survdiff_sex <- survdiff(Surv(time,status)~sex, data=cir_data)
+survdiff_asc <- survdiff(Surv(time,status)~asc, data=cir_data)
+survdiff_agegr <- survdiff(Surv(time,status)~agegr, data=cir_data)
+```
+
+### Logrank test for the treatment covariate
+The Logrank test indicates that there is no significant difference (P < 0.05) in the survival functions of the treatment covariate levels of Prednisone and Placebo. The null hypothesis remains and we have not detected a signficant benefit of using Prednisone on survival. 
+
+```{r}
+survdiff_treat
+```
+
+### Logrank test for the sex covariate
+The Logrank test indicates that sex does not have a significant impact on the survival function; however, the p-value is close to the level of significance (p=0.06), suggesting that this may be an interesting point for future studies.
+
+```{r}
+survdiff_sex
+```
+
+### Logrank test for the ascites covariate
+The Logrank test rejects the null hypothesis that the survival function is the same for groups across levels of the ascites covariate (p = 7e-16). This confirms the graphical interpretation that the prevalence of ascites at the start of treatment significantly influences the survival function. 
+
+```{r}
+survdiff_asc
+```
+
+### Logrank test for the age group covariate
+The Logrank test rejects the null hypothesis that the survival function is the same across age groups (p = 1e-11). This, like that of the ascites covariate, confirms the graphical interpretation that age group significantly influences the survival function. 
+
+```{r}
+survdiff_agegr
+```
+
+## Problem 3c
+
+I next fitted a Cox regression with the following covariates: treatment, sex, ascites and age. 
+
+The treatment covariate was not signficant in the model (p = 0.704), suggesting that receiving Prednisone vs place treatment does not signficantly alter the time to event.
+
+The sex covariate (0=female, 1=male) significantly altered the time to event with a coefficient of 0.462287 (p=0.000228). This coefficient is positive and therefore indicates a worse prognosis over time, consistent with the graphical interpretation above and the hazard ratio, discussed below.
+
+The ascites covariate has a significant coefficient of 0.595150 (p=6.86e-13). This indicates that the prognosis worsens as we move up the levels of the covariate, from no ascites to slight and marked ascite prevalences at the start of treatement.
+
+The age covariate is also significant (p = 8.34e-13) with a coefficient of 0.0489. This suggests that prognosis increases as age increases with a hazard ratio of $e^{0.0489} = 1.050$.
+
+```{r}
+cox_reg<- coxph(Surv(time,status==1)~treat+sex+asc+age,data=cir_data)
+summary(cox_reg)
+
+```
+
+
+### Hazard ratio for the sex covariate
+
+The hazard ratio for men vs women when all other variables are constant is given by
+$HR = e^{\hat{\beta}}$, where $\hat{\beta}$ can be found with the proportional hazard function: 
+$h(t|x) = h_0(t)exp(\beta x)$, where x = 0 for female and x = 1 for male).
+
+The hazard ratio for men vs women when all other variables are constant is 1.588 with 95% confidence interval limits of (1.2417, 2.030). This hazard ratio of 1.255 corresponds to the baseline hazard for men over the baseline hazard for women, suggesting that cirrhosis poses a greater hazard for men. 
+
+### Conclusion on the effect of prednisone in this trial
+From the information above, it can be concluded that the treatment choice of prednisone or placebo did not significantly alter the survival function in this trial. This conclusion is based on the failure to detect a significant influence of prednisone on proportional hazard in the cox regression model (p = 0.704), alongth with the failure to reject the null hypothesis that there is a difference between the two treatment groups (p = 0.4). 
+
+This does not prove that there is no effect of prednisone; it is merely an indication that no significant effect of prednisone was detected in this trial. 
